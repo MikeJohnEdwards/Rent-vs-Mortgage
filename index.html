@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Rent vs Mortgage</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
+      margin: 0;
+      padding: 2rem;
+      max-width: none;
+      background: #f5f5f7;
+      min-height: 100vh;
+      color: #1d1d1f;
+      line-height: 1.47059;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: saturate(180%) blur(20px);
+      border-radius: 18px;
+      padding: 2rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+    
+    h1 {
+      text-align: center;
+      color: #1d1d1f;
+      font-size: 2.5rem;
+      font-weight: 600;
+      margin-bottom: 2rem;
+      letter-spacing: -0.015em;
+    }
+    
+    h2 {
+      color: #1d1d1f;
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin: 2rem 0 1rem 0;
+      letter-spacing: -0.01em;
+    }
+    
+    h3 {
+      color: #1d1d1f;
+      font-size: 1.375rem;
+      font-weight: 600;
+      margin-top: 2rem;
+      letter-spacing: -0.01em;
+    }
+    
+    .input-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    
+    .input-group {
+      background: rgba(255, 255, 255, 0.7);
+      padding: 1.25rem;
+      border-radius: 12px;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.25, 1);
+      backdrop-filter: blur(10px);
+    }
+    
+    .input-group:hover {
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      transform: translateY(-1px);
+      border-color: rgba(0, 0, 0, 0.15);
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: #1d1d1f;
+      font-size: 0.875rem;
+      letter-spacing: -0.01em;
+    }
+    
+    input[type="number"], select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid rgba(0, 0, 0, 0.15);
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.25, 1);
+      background: rgba(255, 255, 255, 0.9);
+      -webkit-font-smoothing: antialiased;
+    }
+    
+    input[type="number"]:focus, select:focus {
+      outline: none;
+      border-color: #007aff;
+      box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.12);
+      background: white;
+    }
+    
+    .input-with-select {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .input-with-select input {
+      flex: 1;
+    }
+    
+    .input-with-select select {
+      flex: 1;
+    }
+    
+    .single-input {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    
+    button {
+      display: block;
+      margin: 3rem auto;
+      padding: 16px 32px;
+      background: #007aff;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.25, 1);
+      box-shadow: 0 2px 8px rgba(0, 122, 255, 0.25);
+      letter-spacing: -0.01em;
+      -webkit-font-smoothing: antialiased;
+    }
+    
+    button:hover {
+      background: #0051d5;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 122, 255, 0.35);
+    }
+    
+    button:active {
+      transform: translateY(0);
+      background: #004fc7;
+    }
+    
+    .results-container {
+      margin-top: 2rem;
+    }
+    
+    .summary {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      padding: 2rem;
+      border-radius: 15px;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+    }
+    
+    .summary-item {
+      background: white;
+      padding: 1rem;
+      border-radius: 8px;
+      border-left: 4px solid #3498db;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .summary-item strong {
+      color: #2c3e50;
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+    
+    .table-container {
+      overflow: auto;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      max-height: 70vh;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+      min-width: 1800px;
+      background: transparent;
+      font-weight: 400;
+      -webkit-font-smoothing: antialiased;
+    }
+    
+    th, td {
+      padding: 12px 8px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+      text-align: right;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    th {
+      background: rgba(248, 248, 248, 0.95);
+      color: #1d1d1f;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      font-weight: 500;
+      font-size: 0.75rem;
+      letter-spacing: -0.01em;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+      backdrop-filter: blur(20px);
+    }
+    
+    th:first-child, td:first-child {
+      text-align: left;
+      position: sticky;
+      left: 0;
+      background: rgba(255, 255, 255, 0.95);
+      z-index: 5;
+      border-right: 1px solid rgba(0, 0, 0, 0.08);
+      backdrop-filter: blur(20px);
+    }
+    
+    th:first-child {
+      background: rgba(248, 248, 248, 0.95);
+      color: #1d1d1f;
+      z-index: 11;
+      backdrop-filter: blur(20px);
+    }
+    
+    tbody tr:nth-child(even) {
+      background-color: rgba(248, 248, 248, 0.3);
+    }
+    
+    tbody tr:nth-child(even) td:first-child {
+      background-color: rgba(248, 248, 248, 0.5);
+      backdrop-filter: blur(20px);
+    }
+    
+    tbody tr:hover {
+      background-color: rgba(0, 122, 255, 0.04);
+    }
+    
+    tbody tr:hover td:first-child {
+      background-color: rgba(0, 122, 255, 0.06);
+      backdrop-filter: blur(20px);
+    }
+    
+    .positive {
+      color: #30d158;
+      font-weight: 500;
+    }
+    
+    .negative {
+      color: #ff3b30;
+      font-weight: 500;
+    }
+    
+    .totals-row {
+      background: rgba(28, 28, 30, 0.95) !important;
+      color: white !important;
+      font-weight: 500;
+      font-size: 0.875rem;
+      backdrop-filter: blur(20px);
+    }
+    
+    .totals-row td {
+      background: rgba(28, 28, 30, 0.95) !important;
+      color: white !important;
+      border-color: rgba(255, 255, 255, 0.1) !important;
+      backdrop-filter: blur(20px);
+    }
+    
+    .totals-row td:first-child {
+      background: rgba(28, 28, 30, 0.95) !important;
+      backdrop-filter: blur(20px);
+    }
+    
+    @media (max-width: 768px) {
+      body {
+        padding: 1rem;
+      }
+      
+      .container {
+        padding: 1rem;
+      }
+      
+      h1 {
+        font-size: 2rem;
+      }
+      
+      .input-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      th, td {
+        padding: 8px 4px;
+        font-size: 0.75rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Rent vs Mortgage</h1>
+
+  <h2>🏠 Home Purchase</h2>
+  <div class="input-grid">
+    <div class="input-group">
+      <label>Home Price ($)</label>
+      <input type="number" id="homePrice" value="400000">
+    </div>
+    
+    <div class="input-group">
+      <label>Down Payment</label>
+      <div class="input-with-select">
+        <input type="number" id="downPaymentValue" value="20">
+        <select id="downPaymentType">
+          <option value="percent">% of Home Price</option>
+          <option value="amount">Fixed Amount</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="input-group">
+      <label>Mortgage Interest Rate (%)</label>
+      <input type="number" id="interestRate" value="5" step="0.01">
+    </div>
+    
+    <div class="input-group">
+      <label>Loan Term (years)</label>
+      <input type="number" id="loanTerm" value="30">
+    </div>
+    
+    <div class="input-group">
+      <label>Custom Monthly Payment ($ - Optional)</label>
+      <input type="number" id="customMonthlyPayment" placeholder="Leave blank for calculated">
+    </div>
+    
+    <div class="input-group">
+      <label>Closing Costs on Purchase (%)</label>
+      <input type="number" id="closingCostsBuy" value="2" step="0.01">
+    </div>
+    
+    <div class="input-group">
+      <label>Selling Costs (%)</label>
+      <input type="number" id="closingCostsSell" value="6" step="0.01">
+    </div>
+    
+    <div class="input-group">
+      <label>Home Appreciation Rate (%)</label>
+      <input type="number" id="appreciationRate" value="3" step="0.01">
+    </div>
+    
+    <div class="input-group">
+      <label>Investment Return on Savings (%)</label>
+      <input type="number" id="savingsReturnRate" value="6" step="0.01">
+    </div>
+  </div>
+
+  <h3>Property Tax</h3>
+  <div class="input-grid">
+    <div class="input-group">
+      <label>Property Tax</label>
+      <div class="input-with-select">
+        <input type="number" id="propertyTaxValue" value="1.2" step="0.01">
+        <select id="propertyTaxType">
+          <option value="percent">% of Home Price</option>
+          <option value="amount">Fixed Annual Amount</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="input-group">
+      <label>Property Tax Inflation (%)</label>
+      <input type="number" id="propertyTaxInflation" value="3" step="0.01">
+    </div>
+  </div>
+
+  <h3>Home Insurance</h3>
+  <div class="input-grid">
+    <div class="input-group">
+      <label>Home Insurance</label>
+      <div class="input-with-select">
+        <input type="number" id="homeInsuranceValue" value="1200">
+        <select id="homeInsuranceType">
+          <option value="amount">Fixed Annual Amount</option>
+          <option value="percent">% of Home Price</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="input-group">
+      <label>Insurance Inflation (%)</label>
+      <input type="number" id="insuranceInflation" value="3" step="0.01">
+    </div>
+  </div>
+
+  <h3>HOA Fees</h3>
+  <div class="input-grid">
+    <div class="input-group">
+      <label>HOA Fees (Monthly $)</label>
+      <input type="number" id="hoaFees" value="200">
+    </div>
+    
+    <div class="input-group">
+      <label>HOA Inflation (%)</label>
+      <input type="number" id="hoaInflation" value="3" step="0.01">
+    </div>
+  </div>
+
+  <h3>Maintenance</h3>
+  <div class="input-grid">
+    <div class="input-group">
+      <label>Maintenance</label>
+      <div class="input-with-select">
+        <input type="number" id="maintenanceValue" value="1" step="0.01">
+        <select id="maintenanceType">
+          <option value="percent">% of Home Price (Annual)</option>
+          <option value="amount">Fixed Annual Amount</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="input-group">
+      <label>Maintenance Inflation (%)</label>
+      <input type="number" id="maintenanceInflation" value="3" step="0.01">
+    </div>
+  </div>
+
+  <div class="single-input">
+    <div class="input-group">
+      <label>Years Owned</label>
+      <input type="number" id="yearsOwned" value="10">
+    </div>
+  </div>
+
+  <h2>🏢 Rental Details</h2>
+  <div class="input-grid">
+    <div class="input-group">
+      <label>Monthly Rent ($)</label>
+      <input type="number" id="monthlyRent" value="2200">
+    </div>
+    
+    <div class="input-group">
+      <label>Annual Rent Increase (%)</label>
+      <input type="number" id="rentInflation" value="3" step="0.01">
+    </div>
+  </div>
+
+  <button onclick="compareCosts()">Calculate Comparison</button>
+
+  <div id="results" class="results-container"></div>
+</div>
+
+<script>
+function formatCurrency(amount) {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(amount);
+}
+
+function formatTimeLabel(month) {
+  const years = Math.floor((month - 1) / 12);
+  const months = month - (years * 12);
+  
+  // Handle special cases for cleaner display
+  if (months === 12) {
+    return `${years + 1} Year${years + 1 === 1 ? '' : 's'}`;
+  } else if (years === 0) {
+    return `${months} Month${months === 1 ? '' : 's'}`;
+  } else if (months === 0) {
+    return `${years} Year${years === 1 ? '' : 's'}`;
+  } else {
+    return `${years} Year${years === 1 ? '' : 's'} ${months} Month${months === 1 ? '' : 's'}`;
+  }
+}
+
+function getNumericValue(id) {
+  const input = document.getElementById(id);
+  const value = input.value.replace(/,/g, '');
+  return parseFloat(value) || 0;
+}
+
+function compareCosts() {
+  const homePrice = getNumericValue("homePrice");
+  const downType = document.getElementById("downPaymentType").value;
+  const downValue = getNumericValue("downPaymentValue");
+  const downPayment = downType === "percent" ? homePrice * (downValue / 100) : downValue;
+  const loanAmount = homePrice - downPayment;
+  const interestRate = getNumericValue("interestRate") / 100;
+  const loanTerm = getNumericValue("loanTerm");
+  const customMonthlyPayment = getNumericValue("customMonthlyPayment");
+
+  const monthlyInterest = interestRate / 12;
+  const nMonths = loanTerm * 12;
+  const defaultPayment = (monthlyInterest * loanAmount) / (1 - Math.pow(1 + monthlyInterest, -nMonths));
+  const monthlyMortgage = customMonthlyPayment > 0 ? customMonthlyPayment : defaultPayment;
+
+  const propertyTaxType = document.getElementById("propertyTaxType").value;
+  let propertyTaxAnnual = propertyTaxType === "percent"
+    ? homePrice * (getNumericValue("propertyTaxValue") / 100)
+    : getNumericValue("propertyTaxValue");
+
+  const propTaxInflation = getNumericValue("propertyTaxInflation") / 100;
+  
+  const homeInsuranceType = document.getElementById("homeInsuranceType").value;
+  let insuranceAnnual = homeInsuranceType === "percent"
+    ? homePrice * (getNumericValue("homeInsuranceValue") / 100)
+    : getNumericValue("homeInsuranceValue");
+  
+  const insInflation = getNumericValue("insuranceInflation") / 100;
+  let hoaMonthly = getNumericValue("hoaFees");
+  const hoaInflation = getNumericValue("hoaInflation") / 100;
+  
+  const maintenanceType = document.getElementById("maintenanceType").value;
+  let maintenanceAnnual = maintenanceType === "percent"
+    ? homePrice * (getNumericValue("maintenanceValue") / 100)
+    : getNumericValue("maintenanceValue");
+  
+  const maintenanceInflation = getNumericValue("maintenanceInflation") / 100;
+  const appreciationRate = getNumericValue("appreciationRate") / 100;
+  const yearsOwned = getNumericValue("yearsOwned");
+  const monthsOwned = yearsOwned * 12;
+  const closingBuy = getNumericValue("closingCostsBuy") / 100;
+  const closingSell = getNumericValue("closingCostsSell") / 100;
+  const returnRate = getNumericValue("savingsReturnRate") / 100;
+  let rent = getNumericValue("monthlyRent");
+  const rentInflation = getNumericValue("rentInflation") / 100;
+
+  let balance = loanAmount;
+  let homeValue = homePrice;
+  let principalTotal = 0, interestTotal = 0, totalRent = 0, totalOwner = 0;
+  let totalHOA = 0, totalInsurance = 0, totalMaintenance = 0, totalPropertyTax = 0, totalClosingBuy = 0;
+  let totalPrincipalPaid = 0; // Track total principal paid (excluding down payment)
+
+  let taxMonthly = propertyTaxAnnual / 12;
+  let insuranceMonthly = insuranceAnnual / 12;
+  let maintenanceMonthly = maintenanceAnnual / 12;
+
+  const buyClosingCostAmount = homePrice * closingBuy;
+
+  let ownershipInvested = 0;
+  let rentInvested = 0;
+
+  let table = `<div class="table-container"><table><thead><tr>
+    <th>Period</th>
+    <th>Principal</th>
+    <th>Interest</th>
+    <th>HOA</th>
+    <th>Insurance</th>
+    <th>Maintenance</th>
+    <th>Property Tax</th>
+    <th>Closing Cost</th>
+    <th>Ownership Cost</th>
+    <th>Rent</th>
+    <th>Variance</th>
+    <th>Ownership Surplus Invested</th>
+<th>Rent Surplus Invested</th>
+<th>Home Value</th>
+<th>Loan Outstanding</th>
+<th>Equity</th>
+<th>Selling Cost</th>
+    <th>Sale Realized</th>
+    <th>Net Benefit of Ownership</th>
+  </tr></thead><tbody>`;
+
+  for (let month = 1; month <= monthsOwned; month++) {
+    const interest = balance * monthlyInterest;
+    let principal = Math.min(monthlyMortgage - interest, balance);
+    
+    // Only track principal payment to loan (not down payment)
+    const principalPaymentToLoan = principal;
+    balance -= principal;
+    
+    // For display purposes, show down payment as principal in month 1
+    if (month === 1) {
+      principal += downPayment;
+    }
+
+    const closingCostThisMonth = month === 1 ? buyClosingCostAmount : 0;
+    const ownerCost = principal + interest + taxMonthly + insuranceMonthly + hoaMonthly + maintenanceMonthly + closingCostThisMonth;
+    const variance = rent - ownerCost;
+
+    principalTotal += principal;
+    interestTotal += interest;
+    totalRent += rent;
+    totalOwner += ownerCost;
+    totalHOA += hoaMonthly;
+    totalInsurance += insuranceMonthly;
+    totalMaintenance += maintenanceMonthly;
+    totalPropertyTax += taxMonthly;
+    totalClosingBuy += closingCostThisMonth;
+    totalPrincipalPaid += principalPaymentToLoan;
+
+    // Apply investment growth (but not in month 1 before we set initial values)
+    if (month > 1) {
+      ownershipInvested *= (1 + returnRate / 12);
+      rentInvested *= (1 + returnRate / 12);
+    }
+
+    // Handle surplus investment logic
+    if (month === 1) {
+      // Special handling for month 1
+      rentInvested = Math.abs(variance);
+      ownershipInvested = 0;
+    } else {
+      // For subsequent months, add the variance to appropriate investment account
+      if (variance < 0) {
+        // Ownership is more expensive, renter has more to invest
+        rentInvested += Math.abs(variance);
+      } else {
+        // Rent is more expensive, owner has more to invest
+        ownershipInvested += variance;
+      }
+    }
+
+    homeValue *= (1 + appreciationRate / 12);
+    // Equity = Home Value - Remaining Loan Balance
+    const equity = homeValue - balance;
+
+    const sellClosingCostThisMonth = month === monthsOwned ? homeValue * closingSell : 0;
+    const saleRealized = month === monthsOwned ? equity - sellClosingCostThisMonth : 0;
+    const netBenefit = equity - rentInvested + ownershipInvested - sellClosingCostThisMonth;
+
+    const label = formatTimeLabel(month);
+
+    table += `<tr>
+      <td><strong>${label}</strong></td>
+      <td>${formatCurrency(principal)}</td>
+      <td>${formatCurrency(interest)}</td>
+      <td>${formatCurrency(hoaMonthly)}</td>
+      <td>${formatCurrency(insuranceMonthly)}</td>
+      <td>${formatCurrency(maintenanceMonthly)}</td>
+      <td>${formatCurrency(taxMonthly)}</td>
+      <td>${formatCurrency(closingCostThisMonth)}</td>
+      <td>${formatCurrency(ownerCost)}</td>
+      <td>${formatCurrency(rent)}</td>
+      <td class="${variance < 0 ? 'negative' : 'positive'}">${formatCurrency(variance)}</td>
+      <td>${formatCurrency(ownershipInvested)}</td>
+<td>${formatCurrency(rentInvested)}</td>
+<td>${formatCurrency(homeValue)}</td>
+<td>${formatCurrency(balance)}</td>
+<td>${formatCurrency(equity)}</td>
+<td>${formatCurrency(sellClosingCostThisMonth)}</td>
+      <td>${month === monthsOwned ? formatCurrency(saleRealized) : ''}</td>
+      <td class="${netBenefit < 0 ? 'negative' : 'positive'}">${formatCurrency(netBenefit)}</td>
+    </tr>`;
+
+    if (month % 12 === 0) {
+      propertyTaxAnnual *= (1 + propTaxInflation);
+      taxMonthly = propertyTaxAnnual / 12;
+      insuranceAnnual *= (1 + insInflation);
+      insuranceMonthly = insuranceAnnual / 12;
+      hoaMonthly *= (1 + hoaInflation);
+      maintenanceAnnual *= (1 + maintenanceInflation);
+      maintenanceMonthly = maintenanceAnnual / 12;
+      rent *= (1 + rentInflation);
+    }
+  }
+
+  // Add totals row
+  const finalEquity = homeValue - balance;
+  const finalSellCost = homeValue * closingSell;
+  const finalSaleRealized = finalEquity - finalSellCost;
+  const finalNetBenefit = finalEquity - rentInvested + ownershipInvested - finalSellCost;
+
+  table += `<tr class="totals-row">
+  <td><strong>TOTALS</strong></td>
+  <td>${formatCurrency(principalTotal)}</td>
+  <td>${formatCurrency(interestTotal)}</td>
+  <td>${formatCurrency(totalHOA)}</td>
+  <td>${formatCurrency(totalInsurance)}</td>
+  <td>${formatCurrency(totalMaintenance)}</td>
+  <td>${formatCurrency(totalPropertyTax)}</td>
+  <td>${formatCurrency(totalClosingBuy)}</td>
+  <td>${formatCurrency(totalOwner)}</td>
+  <td>${formatCurrency(totalRent)}</td>
+  <td class="${(totalRent - totalOwner) < 0 ? 'negative' : 'positive'}">${formatCurrency(totalRent - totalOwner)}</td>
+  <td>${formatCurrency(ownershipInvested)}</td>
+  <td>${formatCurrency(rentInvested)}</td>
+  <td>${formatCurrency(homeValue)}</td>
+  <td>${formatCurrency(balance)}</td>
+  <td>${formatCurrency(finalEquity)}</td>
+  <td>${formatCurrency(finalSellCost)}</td>
+  <td>${formatCurrency(finalSaleRealized)}</td>
+  <td class="${finalNetBenefit < 0 ? 'negative' : 'positive'}">${formatCurrency(finalNetBenefit)}</td>
+</tr>`;
+
+  table += `</tbody></table></div>`;
+
+  document.getElementById("results").innerHTML = `
+    <div class="summary">
+      <h3>📊 Summary After ${yearsOwned} Years</h3>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <strong>Total Principal Paid</strong>
+          ${formatCurrency(principalTotal)}
+        </div>
+        <div class="summary-item">
+          <strong>Total Interest Paid</strong>
+          ${formatCurrency(interestTotal)}
+        </div>
+        <div class="summary-item">
+          <strong>Total Rent Paid</strong>
+          ${formatCurrency(totalRent)}
+        </div>
+        <div class="summary-item">
+          <strong>Final Home Value</strong>
+          ${formatCurrency(homeValue)}
+        </div>
+        <div class="summary-item">
+          <strong>Total Equity</strong>
+          ${formatCurrency(finalEquity)}
+        </div>
+        <div class="summary-item">
+          <strong>Ownership Surplus Invested</strong>
+          ${formatCurrency(ownershipInvested)}
+        </div>
+        <div class="summary-item">
+          <strong>Rent Surplus Invested</strong>
+          ${formatCurrency(rentInvested)}
+        </div>
+        <div class="summary-item">
+          <strong>Net Benefit of Ownership</strong>
+          <span class="${finalNetBenefit < 0 ? 'negative' : 'positive'}">${formatCurrency(finalNetBenefit)}</span>
+        </div>
+      </div>
+    </div>
+    ${table}
+  `;
+}
+</script>
+
+</body
