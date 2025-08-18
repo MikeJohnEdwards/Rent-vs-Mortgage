@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Rent vs Mortgage</title>
+  <title>Rent vs Mortgage (Updated)</title>
   <style>
     * { box-sizing: border-box; }
     body {
@@ -18,7 +18,7 @@
     h1 { text-align: center; font-size: 2.5rem; font-weight: 600; margin-bottom: 2rem; letter-spacing: -0.015em; }
     h2 { font-size: 1.5rem; font-weight: 600; margin: 2rem 0 1rem; letter-spacing: -0.01em; }
     h3 { font-size: 1.375rem; font-weight: 600; margin-top: 2rem; letter-spacing: -0.01em; }
-    .input-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .input-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
     .input-group {
       background: rgba(255,255,255,0.7); padding: 1.25rem; border-radius: 12px; border: 1px solid rgba(0,0,0,0.1);
       transition: all .2s cubic-bezier(.4,0,.25,1); backdrop-filter: blur(10px);
@@ -32,16 +32,16 @@
     input[type="number"]:focus, select:focus { outline: none; border-color: #007aff; box-shadow: 0 0 0 4px rgba(0,122,255,.12); background: #fff; }
     .input-with-select { display: flex; gap: 8px; }
     .input-with-select input, .input-with-select select { flex: 1; }
-    .single-input { display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 2rem; }
+    .single-input { display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1rem; }
     button {
       display: inline-block; padding: 12px 20px; background: #007aff; color: #fff; border: none; border-radius: 12px;
       font-size: 1rem; font-weight: 500; cursor: pointer; transition: all .2s cubic-bezier(.4,0,.25,1); box-shadow: 0 2px 8px rgba(0,122,255,.25);
       margin-right: 10px;
     }
-    .primary-actions { display: flex; justify-content: center; gap: 10px; margin: 2rem 0 1rem; flex-wrap: wrap; }
+    .primary-actions { display: flex; justify-content: center; gap: 10px; margin: 1.25rem 0 1rem; flex-wrap: wrap; }
     button:hover { background: #0051d5; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,122,255,.35); }
     button:active { transform: translateY(0); background: #004fc7; }
-    .results-container { margin-top: 2rem; }
+    .results-container { margin-top: 1rem; }
     .summary {
       background: linear-gradient(135deg,#f8f9fa 0%,#e9ecef 100%); padding: 2rem; border-radius: 15px; margin-bottom: 1rem;
       box-shadow: 0 4px 12px rgba(0,0,0,.1);
@@ -56,7 +56,7 @@
       overflow: auto; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,.08); background: rgba(255,255,255,.8);
       backdrop-filter: blur(20px); border: 1px solid rgba(0,0,0,.1); max-height: 70vh; margin-bottom: 1.25rem;
     }
-    table { width: 100%; border-collapse: collapse; font-size: .875rem; min-width: 1800px; background: transparent; }
+    table { width: 100%; border-collapse: collapse; font-size: .875rem; min-width: 1900px; background: transparent; }
     th, td { padding: 12px 8px; border-bottom: 1px solid rgba(0,0,0,.08); text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     th { background: rgba(248,248,248,.95); text-align: center; position: sticky; top: 0; z-index: 10; font-weight: 500; font-size: .75rem; letter-spacing: -0.01em; border-bottom: 1px solid rgba(0,0,0,.12); backdrop-filter: blur(20px); }
     th:first-child, td:first-child { text-align: left; position: sticky; left: 0; background: rgba(255,255,255,.95); z-index: 5; border-right: 1px solid rgba(0,0,0,.08); backdrop-filter: blur(20px); }
@@ -72,7 +72,13 @@
     .charts { display: grid; gap: 24px; margin-bottom: 1rem; }
     .chart-card { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 4px 16px rgba(0,0,0,.08); }
     .chart-card h4 { margin: 0 0 12px; font-weight: 600; }
-    @media (max-width: 768px) { body { padding: 1rem; } .container { padding: 1rem; } h1 { font-size: 2rem; } .input-grid { grid-template-columns: 1fr; } th, td { padding: 8px 4px; font-size: .75rem; } }
+    .row { display:flex; gap:.5rem; align-items:center; margin-bottom:.5rem; }
+    .row select, .row input[type="number"] { max-width: 170px; }
+    .chip { display:inline-flex; align-items:center; gap:.4rem; background:#f2f2f7; padding:.25rem .6rem; border-radius:999px; font-size:.8rem; }
+    .muted { color:#6e6e73; font-size:.9rem; }
+    .link { color:#007aff; cursor:pointer; text-decoration:underline; }
+    .danger { color:#ff3b30; cursor:pointer; }
+    .toolbar { display:flex; gap:.75rem; align-items:center; flex-wrap:wrap; justify-content:center; margin-top:.5rem; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
 </head>
@@ -80,75 +86,122 @@
 <div class="container">
   <h1>Rent vs Mortgage</h1>
 
+  <div class="toolbar">
+    <!-- (1) Show cents toggle -->
+    <label class="chip"><input type="checkbox" id="toggleCents" checked> Show cents</label>
+
+    <!-- (3) Net benefit selling cost mode -->
+    <label class="chip">Net benefit mode
+      <select id="netBenefitMode">
+        <option value="sale_only" selected>Deduct selling cost only at sale</option>
+        <option value="every_month">Deduct selling cost every month</option>
+      </select>
+    </label>
+  </div>
+
   <h2>🏠 Home Purchase</h2>
   <div class="input-grid">
-    <div class="input-group"><label>Home Price ($)</label><input type="number" id="homePrice" value="400000"></div>
+    <div class="input-group"><label for="homePrice">Home Price ($)</label><input type="number" id="homePrice" value="400000" min="0"></div>
     <div class="input-group">
-      <label>Down Payment</label>
+      <label for="downPaymentValue">Down Payment</label>
       <div class="input-with-select">
-        <input type="number" id="downPaymentValue" value="20">
+        <input type="number" id="downPaymentValue" value="20" min="0">
         <select id="downPaymentType"><option value="percent">% of Home Price</option><option value="amount">Fixed Amount</option></select>
       </div>
     </div>
-    <div class="input-group"><label>Mortgage Interest Rate (%)</label><input type="number" id="interestRate" value="5" step="0.01"></div>
-    <div class="input-group"><label>Loan Term (years)</label><input type="number" id="loanTerm" value="30"></div>
-    <div class="input-group"><label>Custom Monthly Payment ($ - Optional)</label><input type="number" id="customMonthlyPayment" placeholder="Leave blank for calculated"></div>
-    <div class="input-group"><label>Closing Costs on Purchase (%)</label><input type="number" id="closingCostsBuy" value="2" step="0.01"></div>
-    <div class="input-group"><label>Selling Costs (%)</label><input type="number" id="closingCostsSell" value="6" step="0.01"></div>
-    <div class="input-group"><label>Home Appreciation Rate (%)</label><input type="number" id="appreciationRate" value="3" step="0.01"></div>
-    <div class="input-group"><label>Investment Return on Savings (%)</label><input type="number" id="savingsReturnRate" value="6" step="0.01"></div>
+    <div class="input-group"><label for="interestRate">Mortgage Interest Rate (%)</label><input type="number" id="interestRate" value="5" step="0.01" min="0"></div>
+    <div class="input-group"><label for="loanTerm">Loan Term (years)</label><input type="number" id="loanTerm" value="30" min="1"></div>
+    <div class="input-group"><label for="customMonthlyPayment">Custom Monthly Payment ($ - Optional)</label><input type="number" id="customMonthlyPayment" placeholder="Leave blank for calculated" min="0"></div>
+    <div class="input-group"><label for="closingCostsBuy">Closing Costs on Purchase (%)</label><input type="number" id="closingCostsBuy" value="2" step="0.01" min="0"></div>
+    <div class="input-group"><label for="closingCostsSell">Selling Costs (%)</label><input type="number" id="closingCostsSell" value="6" step="0.01" min="0"></div>
+    <div class="input-group"><label for="appreciationRate">Home Appreciation Rate (%)</label><input type="number" id="appreciationRate" value="3" step="0.01"></div>
+    <div class="input-group"><label for="savingsReturnRate">Investment Return on Savings (%)</label><input type="number" id="savingsReturnRate" value="6" step="0.01" min="0"></div>
   </div>
 
-  <h3>Property Tax</h3>
+  <h3>🧾 Property Tax</h3>
   <div class="input-grid">
     <div class="input-group">
-      <label>Property Tax</label>
+      <label for="propertyTaxValue">Property Tax</label>
       <div class="input-with-select">
-        <input type="number" id="propertyTaxValue" value="1.2" step="0.01">
+        <input type="number" id="propertyTaxValue" value="1.2" step="0.01" min="0">
         <select id="propertyTaxType"><option value="percent">% of Home Price</option><option value="amount">Fixed Annual Amount</option></select>
       </div>
     </div>
-    <div class="input-group"><label>Property Tax Inflation (%)</label><input type="number" id="propertyTaxInflation" value="3" step="0.01"></div>
+    <div class="input-group"><label for="propertyTaxInflation">Property Tax Inflation (%)</label><input type="number" id="propertyTaxInflation" value="3" step="0.01" min="0"></div>
   </div>
 
-  <h3>Home Insurance</h3>
+  <h3>🛡️ Home Insurance</h3>
   <div class="input-grid">
     <div class="input-group">
-      <label>Home Insurance</label>
+      <label for="homeInsuranceValue">Home Insurance</label>
       <div class="input-with-select">
-        <input type="number" id="homeInsuranceValue" value="1200">
+        <input type="number" id="homeInsuranceValue" value="1200" min="0">
         <select id="homeInsuranceType"><option value="amount">Fixed Annual Amount</option><option value="percent">% of Home Price</option></select>
       </div>
     </div>
-    <div class="input-group"><label>Insurance Inflation (%)</label><input type="number" id="insuranceInflation" value="3" step="0.01"></div>
+    <div class="input-group"><label for="insuranceInflation">Insurance Inflation (%)</label><input type="number" id="insuranceInflation" value="3" step="0.01" min="0"></div>
   </div>
 
-  <h3>HOA Fees</h3>
+  <h3>🏘️ HOA Fees</h3>
   <div class="input-grid">
-    <div class="input-group"><label>HOA Fees (Monthly $)</label><input type="number" id="hoaFees" value="200"></div>
-    <div class="input-group"><label>HOA Inflation (%)</label><input type="number" id="hoaInflation" value="3" step="0.01"></div>
+    <div class="input-group"><label for="hoaFees">HOA Fees (Monthly $)</label><input type="number" id="hoaFees" value="200" min="0"></div>
+    <div class="input-group"><label for="hoaInflation">HOA Inflation (%)</label><input type="number" id="hoaInflation" value="3" step="0.01" min="0"></div>
   </div>
 
-  <h3>Maintenance</h3>
+  <h3>🛠️ Maintenance</h3>
   <div class="input-grid">
     <div class="input-group">
-      <label>Maintenance</label>
+      <label for="maintenanceValue">Maintenance</label>
       <div class="input-with-select">
-        <input type="number" id="maintenanceValue" value="1" step="0.01">
+        <input type="number" id="maintenanceValue" value="1" step="0.01" min="0">
         <select id="maintenanceType"><option value="percent">% of Home Price (Annual)</option><option value="amount">Fixed Annual Amount</option></select>
       </div>
     </div>
-    <div class="input-group"><label>Maintenance Inflation (%)</label><input type="number" id="maintenanceInflation" value="3" step="0.01"></div>
+    <div class="input-group"><label for="maintenanceInflation">Maintenance Inflation (%)</label><input type="number" id="maintenanceInflation" value="3" step="0.01" min="0"></div>
   </div>
 
   <div class="single-input">
-    <div class="input-group"><label>Years Owned</label><input type="number" id="yearsOwned" value="10"></div>
+    <div class="input-group"><label for="yearsOwned">Years Owned</label><input type="number" id="yearsOwned" value="10" min="1"></div>
+  </div>
+
+  <h3>💡 Additional Principal Payments</h3>
+  <div class="input-grid">
+    <div class="input-group" style="grid-column: 1 / -1">
+      <label class="muted">Manual extra payments. A new row appears once the current row is complete. All figures are applied in the month selected.</label>
+      <div id="extraPrincipalContainer"></div>
+      <div class="muted" style="margin-top:.5rem">Tip: Change <span class="chip">Years Owned</span> to expand year choices.</div>
+    </div>
+
+    <div class="input-group" style="grid-column: 1 / -1">
+      <label><strong>Recurring annual extra payment until loan payoff</strong></label>
+      <div class="row">
+        <select id="recurringExtraMonth">
+            
+<option value="">Month</option>
+<option value="1">Month 1</option>
+<option value="2">Month 2</option>
+<option value="3">Month 3</option>
+<option value="4">Month 4</option>
+<option value="5">Month 5</option>
+<option value="6">Month 6</option>
+<option value="7">Month 7</option>
+<option value="8">Month 8</option>
+<option value="9">Month 9</option>
+<option value="10">Month 10</option>
+<option value="11">Month 11</option>
+<option value="12">Month 12</option>
+</select>
+ <input type="number" id="recurringExtraAmount" placeholder="Amount $" min="0" step="100"></label>
+        </label>
+        <span class="muted">Applied each year on the selected month until balance reaches $0.</span>
+      </div>
+    </div>
   </div>
 
   <h2>🏢 Rental Details</h2>
   <div class="input-grid">
-    <div class="input-group"><label>Monthly Rent ($)</label><input type="number" id="monthlyRent" value="2200"></div>
-    <div class="input-group"><label>Annual Rent Increase (%)</label><input type="number" id="rentInflation" value="3" step="0.01"></div>
+    <div class="input-group"><label for="monthlyRent">Monthly Rent ($)</label><input type="number" id="monthlyRent" value="2200" min="0"></div>
+    <div class="input-group"><label for="rentInflation">Annual Rent Increase (%)</label><input type="number" id="rentInflation" value="3" step="0.01"></div>
   </div>
 
   <div class="primary-actions">
@@ -160,13 +213,23 @@
 </div>
 
 <script>
+// (1) Show cents toggle: state is derived from checkbox
+let showCents = true;
+function syncCentsToggle() {
+  const el = document.getElementById('toggleCents');
+  showCents = !!el?.checked;
+}
 function formatCurrency(amount) {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount);
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency', currency: 'USD',
+    minimumFractionDigits: showCents ? 2 : 0,
+    maximumFractionDigits: showCents ? 2 : 0
+  }).format(amount);
 }
 function formatTimeLabel(month) {
   const years = Math.floor((month - 1) / 12);
   const months = month - (years * 12);
-  if (months === 12) return `${years + 1} Year${years + 1 === 1 ? '' : 's'}`;
+  if (months === 12) return `${years + 1} Years`;
   if (years === 0) return `${months} Month${months === 1 ? '' : 's'}`;
   if (months === 0) return `${years} Year${years === 1 ? '' : 's'}`;
   return `${years} Year${years === 1 ? '' : 's'} ${months} Month${months === 1 ? '' : 's'}`;
@@ -177,13 +240,111 @@ function getNumericValue(id) {
   return parseFloat(value) || 0;
 }
 
-// CSV + chart + table state
+// EXTRA PRINCIPAL UI ------------------------------
+let paymentRowId = 0;
+function monthName(m){return `Month ${m}`;}
+function buildYearOptions() {
+  const yearsOwned = Math.max(1, parseInt(document.getElementById('yearsOwned').value || '1', 10));
+  const opts = [];
+  for (let y = 1; y <= yearsOwned; y++) { opts.push(`<option value="${y}">Year ${y}</option>`); }
+  return opts.join('');
+}
+function ensureAtLeastOneExtraRow() {
+  const c = document.getElementById('extraPrincipalContainer');
+  if (c.querySelectorAll('.row').length === 0) addExtraRow();
+}
+function addExtraRow(prefill) {
+  const c = document.getElementById('extraPrincipalContainer');
+  const id = ++paymentRowId;
+  const row = document.createElement('div');
+  row.className = 'row';
+  row.dataset.rowId = id;
+  row.innerHTML = `
+    <select class="yearSel"><option value="">Year</option>${buildYearOptions()}</select>
+    <select class="monthSel">
+      <option value="">Month</option>
+      ${Array.from({length:12},(_,i)=>`<option value="${i+1}">${monthName(i+1)}</option>`).join('')}
+    </select>
+    <input type="number" class="amtInput" placeholder="Amount $" min="0" step="100">
+    <span class="danger" title="Remove" onclick="this.parentElement.remove(); ensureAtLeastOneExtraRow();">✕</span>
+  `;
+  c.appendChild(row);
+  const yearSel = row.querySelector('.yearSel');
+  const monthSel = row.querySelector('.monthSel');
+  const amtInput = row.querySelector('.amtInput');
+  if (prefill) {
+    if (prefill.year) yearSel.value = prefill.year;
+    if (prefill.month) monthSel.value = prefill.month;
+    if (prefill.amount) amtInput.value = prefill.amount;
+  }
+  const onAnyChange = () => { maybeAppendAnotherRow(); };
+  yearSel.addEventListener('change', onAnyChange);
+  monthSel.addEventListener('change', onAnyChange);
+  amtInput.addEventListener('input', onAnyChange);
+}
+function rowIsFilled(row) {
+  const y = row.querySelector('.yearSel').value;
+  const m = row.querySelector('.monthSel').value;
+  const a = parseFloat(row.querySelector('.amtInput').value);
+  return y && m && a > 0;
+}
+function maybeAppendAnotherRow() {
+  const c = document.getElementById('extraPrincipalContainer');
+  const rows = Array.from(c.querySelectorAll('.row'));
+  if (rows.length === 0) { addExtraRow(); return; }
+  const last = rows[rows.length - 1];
+  if (rowIsFilled(last)) { addExtraRow(); }
+}
+function readExtraPaymentsManual() {
+  const c = document.getElementById('extraPrincipalContainer');
+  const rows = Array.from(c.querySelectorAll('.row'));
+  const out = [];
+  for (const r of rows) {
+    const year = parseInt(r.querySelector('.yearSel').value, 10);
+    const month = parseInt(r.querySelector('.monthSel').value, 10);
+    const amount = parseFloat(r.querySelector('.amtInput').value || '0');
+    if (year && month && amount > 0) {
+      const monthIndex = (year - 1) * 12 + month; // 1-based month index
+      out.push({ monthIndex, amount });
+    }
+  }
+  return out;
+}
+function readExtraPaymentsRecurring(monthsOwned) {
+  const amount = parseFloat(document.getElementById('recurringExtraAmount').value || '0');
+  const month = parseInt(document.getElementById('recurringExtraMonth').value || '0', 10);
+  if (!(amount > 0 && month >= 1 && month <= 12)) return [];
+  const out = [];
+  for (let y = 1; y <= Math.ceil(monthsOwned / 12); y++) {
+    const idx = (y - 1) * 12 + month;
+    if (idx >= 1 && idx <= monthsOwned) out.push({ monthIndex: idx, amount });
+  }
+  return out;
+}
+function combineExtraMaps(list) {
+  const byMonth = {};
+  for (const entry of list) {
+    const { monthIndex, amount } = entry;
+    byMonth[monthIndex] = (byMonth[monthIndex] || 0) + amount;
+  }
+  return byMonth;
+}
+function refreshYearOptionsInRows() {
+  const maxYear = Math.max(1, parseInt(document.getElementById('yearsOwned').value || '1', 10));
+  const opts = Array.from({length: maxYear}, (_,i)=>`<option value="${i+1}">Year ${i+1}</option>`).join('');
+  document.querySelectorAll('#extraPrincipalContainer .yearSel').forEach(sel=>{
+    const cur = parseInt(sel.value || '0', 10);
+    sel.innerHTML = `<option value="">Year</option>${opts}`;
+    if (!cur || cur > maxYear) sel.value = '';
+  });
+}
+
+// CSV + chart + table state -----------------------
 let latestRows = [], latestHeaders = [];
 let chart1, chart2;
 let monthlyDetails = []; // per-month objects for rendering table in different granularities
 let tableMode = 'monthly'; // 'monthly' | 'yearly'
 
-// Compute a clean “step in years” so the x-axis stays tidy.
 function computeStepYears(years) {
   if (years <= 12) return 1;
   if (years <= 24) return 2;
@@ -191,11 +352,18 @@ function computeStepYears(years) {
   return 10;
 }
 
+function calcMonthlyPayment(loanAmount, monthlyInterest, nMonths) {
+  if (loanAmount <= 0 || nMonths <= 0) return 0;
+  if (Math.abs(monthlyInterest) < 1e-12) return loanAmount / nMonths; // zero-rate guard
+  return (monthlyInterest * loanAmount) / (1 - Math.pow(1 + monthlyInterest, -nMonths));
+}
+
 function compareCosts() {
+  syncCentsToggle(); // reflect UI
   latestRows = [];
   monthlyDetails = [];
   latestHeaders = [
-    "Period","Principal","Interest","HOA","Insurance","Maintenance","Property Tax",
+    "Period","Principal","Down Payment & Additional Principal","Interest","HOA","Insurance","Maintenance","Property Tax",
     "Closing Cost (Buy)","Ownership Cost","Rent","Variance","Ownership Surplus Invested",
     "Rent Surplus Invested","Home Value","Loan Outstanding","Equity","Selling Cost (at sale)",
     "Sale Realized (at sale)","Net Benefit of Ownership"
@@ -205,15 +373,24 @@ function compareCosts() {
   const downType = document.getElementById("downPaymentType").value;
   const downValue = getNumericValue("downPaymentValue");
   const downPayment = downType === "percent" ? homePrice * (downValue / 100) : downValue;
-  const loanAmount = homePrice - downPayment;
+  const loanAmount = Math.max(0, homePrice - downPayment);
   const interestRate = getNumericValue("interestRate") / 100;
   const loanTerm = getNumericValue("loanTerm");
   const customMonthlyPayment = getNumericValue("customMonthlyPayment");
 
   const monthlyInterest = interestRate / 12;
-  const nMonths = Math.max(1, loanTerm * 12);
-  const defaultPayment = (monthlyInterest * loanAmount) / (1 - Math.pow(1 + monthlyInterest, -nMonths));
+  const nMonths = Math.max(1, Math.round(loanTerm * 12));
+  const defaultPayment = calcMonthlyPayment(loanAmount, monthlyInterest, nMonths);
   const monthlyMortgage = customMonthlyPayment > 0 ? customMonthlyPayment : defaultPayment;
+
+  // Basic input validations
+  if (homePrice <= 0) { alert('Home price must be greater than 0.'); return; }
+  if (downPayment < 0 || downPayment > homePrice) { alert('Down payment must be between 0 and the home price.'); return; }
+  if (interestRate < 0) { alert('Interest rate cannot be negative.'); return; }
+  if (customMonthlyPayment > 0 && (customMonthlyPayment < (loanAmount * monthlyInterest))) {
+    alert('Custom payment is less than month-one interest. Increase the payment or clear the custom payment to use the calculated amount.');
+    return;
+  }
 
   const propertyTaxType = document.getElementById("propertyTaxType").value;
   let propertyTaxAnnual = propertyTaxType === "percent"
@@ -237,51 +414,62 @@ function compareCosts() {
   const maintenanceInflation = getNumericValue("maintenanceInflation") / 100;
 
   const appreciationRate = getNumericValue("appreciationRate") / 100;
-  const yearsOwned = getNumericValue("yearsOwned");
-  const monthsOwned = Math.max(1, yearsOwned * 12);
+  const yearsOwned = Math.max(1, getNumericValue("yearsOwned"));
+  const monthsOwned = Math.max(1, Math.round(yearsOwned * 12));
   const closingBuy = getNumericValue("closingCostsBuy") / 100;
   const closingSell = getNumericValue("closingCostsSell") / 100;
-  const returnRate = getNumericValue("savingsReturnRate") / 100;
+  const returnRate = Math.max(0, getNumericValue("savingsReturnRate") / 100);
   let rent = getNumericValue("monthlyRent");
   const rentInflation = getNumericValue("rentInflation") / 100;
 
+  // (4) Read extra principal: manual + recurring
+  const manual = readExtraPaymentsManual();
+  const recurring = readExtraPaymentsRecurring(monthsOwned);
+  const extraByMonth = combineExtraMaps([...manual, ...recurring]); // {monthIndex: amount}
+
   let balance = loanAmount;
   let homeValue = homePrice;
-  let principalTotal = 0, interestTotal = 0, totalRent = 0, totalOwner = 0;
-  let totalHOA = 0, totalInsurance = 0, totalMaintenance = 0, totalPropertyTax = 0, totalClosingBuy = 0;
+  let principalOnlyTotal = 0, extraPrincipalTotal = 0, interestTotal = 0, totalRent = 0, totalOwner = 0;
+  let totalHOA = 0, totalInsurance = 0, totalMaintenance = 0, totalPropertyTax = 0;
 
   let taxMonthly = propertyTaxAnnual / 12;
   let insuranceMonthly = insuranceAnnual / 12;
   let maintenanceMonthly = maintenanceAnnual / 12;
 
   const buyClosingCostAmount = homePrice * closingBuy;
+  const cashAtClose = downPayment + buyClosingCostAmount; // show separately in summary
 
   let ownershipInvested = 0;
   let rentInvested = 0;
 
-  // Series
-  const labels = [];
-  const cumOwnerOutlay = [];
-  const cumRentOutlay = [];
+  // Series (use numeric X = month index for safer ticks)
+  const labels = []; // 1..monthsOwned (numeric)
   const netBenefitSeries = [];
   const equitySeries = [];
-  const renterInvestedSeries = [];
-  const ownershipInvestedSeries = [];
-  const combinedEquityPlusOwnerInvested = [];
+
+  const netBenefitMode = document.getElementById('netBenefitMode').value; // 'sale_only' | 'every_month'
 
   for (let month = 1; month <= monthsOwned; month++) {
-    const interest = balance * monthlyInterest;
+    let interest = balance * monthlyInterest;
     let principal = Math.min(monthlyMortgage - interest, balance);
-    const principalPaymentToLoan = principal;
+    if (principal < 0) principal = 0;
     balance -= principal;
 
-    if (month === 1) { principal += downPayment; }
+    let extraPrincipal = 0;
+    if (extraByMonth[month]) {
+      extraPrincipal = Math.min(extraByMonth[month], balance);
+      balance -= extraPrincipal;
+    }
 
     const closingCostThisMonth = month === 1 ? buyClosingCostAmount : 0;
-    const ownerCost = principal + interest + taxMonthly + insuranceMonthly + hoaMonthly + maintenanceMonthly + closingCostThisMonth;
-    const variance = rent - ownerCost;
+// include down payment in the "Down Payment & Additional Principal" column on month 1 (do not subtract from balance again)
+if (month === 1 && downPayment > 0) { extraPrincipal += downPayment; }
 
-    principalTotal += principal;
+const ownerCost = principal + extraPrincipal + interest + taxMonthly + insuranceMonthly + hoaMonthly + maintenanceMonthly + closingCostThisMonth;
+    const variance = rent - ownerCost; // positive => renting costs more
+
+    principalOnlyTotal += principal;
+    extraPrincipalTotal += extraPrincipal;
     interestTotal += interest;
     totalRent += rent;
     totalOwner += ownerCost;
@@ -289,43 +477,37 @@ function compareCosts() {
     totalInsurance += insuranceMonthly;
     totalMaintenance += maintenanceMonthly;
     totalPropertyTax += taxMonthly;
-    totalClosingBuy += closingCostThisMonth;
 
-    // Grow investments
     if (month > 1) {
       ownershipInvested *= (1 + returnRate / 12);
-      rentInvested *= (1 + returnRate / 12);
+      rentInvested      *= (1 + returnRate / 12);
     }
-    if (month === 1) {
-      rentInvested = Math.abs(variance);
-      ownershipInvested = 0;
-    } else {
-      if (variance < 0) rentInvested += Math.abs(variance);
-      else ownershipInvested += variance;
-    }
+    if (variance >= 0) ownershipInvested += variance; else rentInvested += -variance;
 
     homeValue *= (1 + appreciationRate / 12);
     const equity = homeValue - balance;
 
-    const sellClosingCostThisMonth = month === monthsOwned ? homeValue * closingSell : 0;
-    const saleRealized = month === monthsOwned ? equity - sellClosingCostThisMonth : 0;
-    const netBenefit = equity - rentInvested + ownershipInvested - (month === monthsOwned ? sellClosingCostThisMonth : 0);
+    // (3) Net benefit selling cost deduction per mode
+    let sellClosingCostThisMonth = 0;
+let saleRealized = 0;
+if (netBenefitMode === 'every_month') {
+  sellClosingCostThisMonth = homeValue * closingSell;
+  saleRealized = equity - sellClosingCostThisMonth;
+} else if (month === monthsOwned) {
+  sellClosingCostThisMonth = homeValue * closingSell;
+  saleRealized = equity - sellClosingCostThisMonth;
+}
+const sellingCostApplied = sellClosingCostThisMonth;
+const netBenefit = equity - rentInvested + ownershipInvested - sellingCostApplied;
 
-    const label = formatTimeLabel(month);
-    labels.push(label);
-    cumOwnerOutlay.push(totalOwner);
-    cumRentOutlay.push(totalRent);
+    labels.push(month);
     netBenefitSeries.push(netBenefit);
     equitySeries.push(equity);
-    renterInvestedSeries.push(rentInvested);
-    ownershipInvestedSeries.push(ownershipInvested);
-    combinedEquityPlusOwnerInvested.push(equity + ownershipInvested);
 
-    // Store monthly detail for table rendering
     monthlyDetails.push({
       monthIndex: month,
-      periodLabel: label,
-      principal, interest,
+      periodLabel: formatTimeLabel(month),
+      principal, extraPrincipal, interest,
       hoa: hoaMonthly, insurance: insuranceMonthly, maintenance: maintenanceMonthly, propertyTax: taxMonthly,
       closingCostBuy: closingCostThisMonth,
       ownershipCost: ownerCost,
@@ -338,7 +520,6 @@ function compareCosts() {
       netBenefit
     });
 
-    // Annual bumps
     if (month % 12 === 0) {
       propertyTaxAnnual *= (1 + propTaxInflation); taxMonthly = propertyTaxAnnual / 12;
       insuranceAnnual *= (1 + insInflation);        insuranceMonthly = insuranceAnnual / 12;
@@ -346,29 +527,75 @@ function compareCosts() {
       maintenanceAnnual *= (1 + maintenanceInflation); maintenanceMonthly = maintenanceAnnual / 12;
       rent *= (1 + rentInflation);
     }
+
+    if (balance <= 0.005) { balance = 0;
+      if (month < monthsOwned) {
+        for (let m = month + 1; m <= monthsOwned; m++) {
+          homeValue *= (1 + appreciationRate / 12);
+          const ownerCost2 = taxMonthly + insuranceMonthly + hoaMonthly + maintenanceMonthly; // no P&I after payoff
+          const variance2 = rent - ownerCost2;
+          ownershipInvested *= (1 + returnRate / 12);
+          rentInvested      *= (1 + returnRate / 12);
+          if (variance2 >= 0) ownershipInvested += variance2; else rentInvested += -variance2;
+          const equity2 = homeValue;
+
+          let sellClosingCostThisMonth2 = 0;
+let saleRealized2 = 0;
+if (netBenefitMode === 'every_month') {
+  sellClosingCostThisMonth2 = homeValue * closingSell;
+  saleRealized2 = equity2 - sellClosingCostThisMonth2;
+} else if (m === monthsOwned) {
+  sellClosingCostThisMonth2 = homeValue * closingSell;
+  saleRealized2 = equity2 - sellClosingCostThisMonth2;
+}
+const netBenefit2 = equity2 - rentInvested + ownershipInvested - sellClosingCostThisMonth2;
+
+          monthlyDetails.push({
+            monthIndex: m, periodLabel: formatTimeLabel(m),
+            principal: 0, extraPrincipal: 0, interest: 0,
+            hoa: hoaMonthly, insurance: insuranceMonthly, maintenance: maintenanceMonthly, propertyTax: taxMonthly,
+            closingCostBuy: 0,
+            ownershipCost: ownerCost2,
+            rent, variance: variance2,
+            ownershipInvested, rentInvested,
+            homeValue, loanOutstanding: 0, equity: equity2,
+            sellingCost: sellClosingCostThisMonth2,
+            saleRealized: saleRealized2,
+            netBenefit: netBenefit2
+          });
+          if (m % 12 === 0) {
+            propertyTaxAnnual *= (1 + propTaxInflation); taxMonthly = propertyTaxAnnual / 12;
+            insuranceAnnual *= (1 + insInflation);        insuranceMonthly = insuranceAnnual / 12;
+            hoaMonthly     *= (1 + hoaInflation);
+            maintenanceAnnual *= (1 + maintenanceInflation); maintenanceMonthly = maintenanceAnnual / 12;
+            rent *= (1 + rentInflation);
+          }
+        }
+      }
+      break;
+    }
   }
 
-  const finalEquity = homeValue - balance;
-  const finalSellCost = homeValue * closingSell;
-  const finalSaleRealized = finalEquity - finalSellCost;
-  const finalNetBenefit = finalEquity - (renterInvestedSeries.at(-1) || 0) + (ownershipInvestedSeries.at(-1) || 0) - finalSellCost;
+  const totalPrincipalPaid = principalOnlyTotal + extraPrincipalTotal;
+  const finalSnap = monthlyDetails[monthlyDetails.length - 1];
+  const finalEquity = finalSnap.equity;
+  const finalNetBenefit = finalSnap.netBenefit;
 
-  // Render summary, table controls, charts containers
   document.getElementById("results").innerHTML = `
     <div class="summary">
       <h3>📊 Summary After ${yearsOwned} Years</h3>
       <div class="summary-grid">
-        <div class="summary-item"><strong>Total Principal Paid</strong>${formatCurrency(principalTotal)}</div>
-        <div class="summary-item"><strong>Total Interest Paid</strong>${formatCurrency(interestTotal)}</div>
+        <div class="summary-item"><strong>Total Principal Paid</strong>${formatCurrency(totalPrincipalPaid)}</div><div class="summary-item"><strong>Total Interest Paid</strong>${formatCurrency(interestTotal)}</div>
         <div class="summary-item"><strong>Total Rent Paid</strong>${formatCurrency(totalRent)}</div>
-        <div class="summary-item"><strong>Final Home Value</strong>${formatCurrency(homeValue)}</div>
+        <div class="summary-item"><strong>Final Home Value</strong>${formatCurrency(finalSnap.homeValue)}</div>
         <div class="summary-item"><strong>Total Equity</strong>${formatCurrency(finalEquity)}</div>
-        <div class="summary-item"><strong>Ownership Surplus Invested</strong>${formatCurrency(ownershipInvestedSeries.at(-1) || 0)}</div>
-        <div class="summary-item"><strong>Rent Surplus Invested</strong>${formatCurrency(renterInvestedSeries.at(-1) || 0)}</div>
+        <div class="summary-item"><strong>Ownership Surplus Invested</strong>${formatCurrency(finalSnap.ownershipInvested)}</div>
+        <div class="summary-item"><strong>Rent Surplus Invested</strong>${formatCurrency(finalSnap.rentInvested)}</div>
         <div class="summary-item"><strong>Net Benefit of Ownership</strong>
           <span class="${finalNetBenefit < 0 ? 'negative' : 'positive'}">${formatCurrency(finalNetBenefit)}</span>
         </div>
       </div>
+      <div class="muted" style="margin-top:.5rem">Net benefit mode: <strong>${document.getElementById('netBenefitMode').selectedOptions[0].text}</strong></div>
     </div>
 
     <div class="table-controls">
@@ -382,62 +609,75 @@ function compareCosts() {
 
     <div class="charts">
       <div class="chart-card">
-        <h4>Cumulative Owner Outlay vs Rent Outlay & Net Benefit</h4>
+        <h4>Cumulative Owner Outlay vs Rent Outlay</h4>
         <canvas id="chartOutlay"></canvas>
       </div>
       <div class="chart-card">
-        <h4>Equity + Ownership Surplus Invested vs Renter Surplus Invested</h4>
+        <h4>Equity + Ownership Surplus Invested vs Renter Surplus Invested + Net Benefit of Ownership</h4>
         <canvas id="chartEquity"></canvas>
       </div>
     </div>
   `;
 
-  // Hook up table mode selector
   const modeSelect = document.getElementById('tableModeSelect');
   modeSelect.onchange = () => { tableMode = modeSelect.value; renderTable(); };
-  tableMode = 'monthly'; // reset on every run
-  renderTable(); // initial
+  tableMode = 'monthly';
+  renderTable();
 
-  // Enable CSV button with current view
   const btn = document.getElementById('downloadCsvBtn');
   btn.disabled = false;
   btn.onclick = () => downloadCSV(latestHeaders, latestRows, `rent-vs-mortgage-${tableMode}-${Date.now()}.csv`);
 
-  // Draw charts
+  // (2) Chart axes and tooltips show Year + Month
   const ctx1 = document.getElementById('chartOutlay').getContext('2d');
   const ctx2 = document.getElementById('chartEquity').getContext('2d');
   if (chart1) chart1.destroy();
   if (chart2) chart2.destroy();
 
-  const stepYears = computeStepYears(yearsOwned);
-  const tickCallback = (value, index) => {
-    const monthIndex = index + 1;
-    const isYearMark = monthIndex % 12 === 0;
-    const yearNumber = monthIndex / 12;
-    const matchesStep = yearNumber % stepYears === 0;
-    return (isYearMark && matchesStep) ? `Year ${yearNumber}` : '';
-  };
+  const totalMonths = monthlyDetails.length;
+const xScale = {
+  type: 'linear',
+  min: 1,
+  max: totalMonths,
+  ticks: {
+    stepSize: 12,        // force one tick every 12 months
+    autoSkip: false,     // don’t let Chart.js hide ticks
+    precision: 0,        // keep integer tick values
+    callback: (val) => {
+      // ticks will be 12, 24, 36, ...
+      if (!Number.isInteger(val)) return '';
+      if (val >= 12 && val % 12 === 0) {
+        const year = val / 12;
+        return `${year} year${year > 1 ? 's' : ''}`;
+      }
+      return '';
+    }
+  },
+  grid: { display: true }
+};
 
   chart1 = new Chart(ctx1, {
     type: 'line',
     data: {
-      labels: monthlyDetails.map(d => d.periodLabel),
       datasets: [
-        { label: 'Cumulative Owner Outlay', data: cumulativeFrom(monthlyDetails.map(d => d.ownershipCost)), borderWidth: 2, tension: 0.15, pointRadius: 0 },
-        { label: 'Cumulative Rent Outlay', data: cumulativeFrom(monthlyDetails.map(d => d.rent)), borderWidth: 2, tension: 0.15, pointRadius: 0 },
-        { label: 'Net Benefit of Ownership', data: monthlyDetails.map(d => d.netBenefit), borderWidth: 2, tension: 0.15, pointRadius: 0, yAxisID: 'y' }
-      ]
+        { label: 'Cumulative Owner Outlay', data: cumulativeFrom(monthlyDetails.map(d => d.ownershipCost)).map((y,i)=>({x:i+1,y})), borderWidth: 2, tension: 0.15, pointRadius: 0 },
+        { label: 'Cumulative Rent Outlay',  data: cumulativeFrom(monthlyDetails.map(d => d.rent)).map((y,i)=>({x:i+1,y})), borderWidth: 2, tension: 0.15, pointRadius: 0 }]
     },
     options: {
       responsive: true,
       interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: { position: 'top' },
-        tooltip: { callbacks: { label: (ctx)=> `${ctx.dataset.label}: ${formatCurrency(ctx.parsed.y)}` } }
+        tooltip: {
+          callbacks: {
+            title: (items)=> formatTimeLabel(items[0].parsed.x),
+            label: (ctx)=> `${ctx.dataset.label}: ${formatCurrency(ctx.parsed.y)}`
+          }
+        }
       },
       scales: {
         y: { ticks: { callback: (v)=> formatCurrency(v) } },
-        x: { ticks: { autoSkip: false, callback: tickCallback } }
+        x: xScale
       }
     }
   });
@@ -445,10 +685,10 @@ function compareCosts() {
   chart2 = new Chart(ctx2, {
     type: 'line',
     data: {
-      labels: monthlyDetails.map(d => d.periodLabel),
       datasets: [
-        { label: 'Equity + Ownership Surplus Invested', data: monthlyDetails.map(d => d.equity + d.ownershipInvested), borderWidth: 2, tension: 0.15, pointRadius: 0 },
-        { label: 'Renter Surplus Invested', data: monthlyDetails.map(d => d.rentInvested), borderWidth: 2, tension: 0.15, pointRadius: 0 }
+        { label: 'Equity + Ownership Surplus Invested', data: monthlyDetails.map((d,i)=>({x:i+1,y:d.equity + d.ownershipInvested})), borderWidth: 2, tension: 0.15, pointRadius: 0 },
+        { label: 'Renter Surplus Invested', data: monthlyDetails.map((d,i)=>({x:i+1,y:d.rentInvested})), borderWidth: 2, tension: 0.15, pointRadius: 0 },
+	{ label: 'Net Benefit of Ownership', data: monthlyDetails.map((d,i)=>({x:i+1,y:d.netBenefit})), borderWidth: 2, tension: 0.15, pointRadius: 0 }
       ]
     },
     options: {
@@ -456,17 +696,22 @@ function compareCosts() {
       interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: { position: 'top' },
-        tooltip: { callbacks: { label: (ctx)=> `${ctx.dataset.label}: ${formatCurrency(ctx.parsed.y)}` } }
+        tooltip: {
+          callbacks: {
+            title: (items)=> formatTimeLabel(items[0].parsed.x),
+            label: (ctx)=> `${ctx.dataset.label}: ${formatCurrency(ctx.parsed.y)}`
+          }
+        }
       },
       scales: {
         y: { ticks: { callback: (v)=> formatCurrency(v) } },
-        x: { ticks: { autoSkip: false, callback: tickCallback } }
+        x: xScale
       }
     }
   });
 }
 
-// helpers
+// helpers -----------------------------------------
 function cumulativeFrom(arr) {
   const out = []; let sum = 0;
   for (const v of arr) { sum += v; out.push(sum); }
@@ -478,7 +723,7 @@ function renderTable() {
   const mount = document.getElementById('tableMount');
   if (tableMode === 'monthly') {
     latestHeaders = [
-      "Period","Principal","Interest","HOA","Insurance","Maintenance","Property Tax",
+      "Period","Principal","Down Payment & Additional Principal","Interest","HOA","Insurance","Maintenance","Property Tax",
       "Closing Cost (Buy)","Ownership Cost","Rent","Variance","Ownership Surplus Invested",
       "Rent Surplus Invested","Home Value","Loan Outstanding","Equity","Selling Cost (at sale)",
       "Sale Realized (at sale)","Net Benefit of Ownership"
@@ -487,6 +732,7 @@ function renderTable() {
       return `<tr>
         <td><strong>${d.periodLabel}</strong></td>
         <td>${formatCurrency(d.principal)}</td>
+        <td>${formatCurrency(d.extraPrincipal)}</td>
         <td>${formatCurrency(d.interest)}</td>
         <td>${formatCurrency(d.hoa)}</td>
         <td>${formatCurrency(d.insurance)}</td>
@@ -502,15 +748,15 @@ function renderTable() {
         <td>${formatCurrency(d.loanOutstanding)}</td>
         <td>${formatCurrency(d.equity)}</td>
         <td>${formatCurrency(d.sellingCost)}</td>
-        <td>${d.saleRealized ? formatCurrency(d.saleRealized) : ''}</td>
+        <td>${formatCurrency(d.saleRealized)}</td>
         <td class="${d.netBenefit < 0 ? 'negative' : 'positive'}">${formatCurrency(d.netBenefit)}</td>
       </tr>`;
     }).join('');
 
-    // totals row (from last monthly snapshot)
     const last = monthlyDetails[monthlyDetails.length - 1];
     const totals = {
       principal: monthlyDetails.reduce((s,d)=>s+d.principal,0),
+      extraPrincipal: monthlyDetails.reduce((s,d)=>s+d.extraPrincipal,0),
       interest: monthlyDetails.reduce((s,d)=>s+d.interest,0),
       hoa: monthlyDetails.reduce((s,d)=>s+d.hoa,0),
       insurance: monthlyDetails.reduce((s,d)=>s+d.insurance,0),
@@ -525,7 +771,7 @@ function renderTable() {
     mount.innerHTML = `
       <div class="table-container"><table>
         <thead><tr>
-          <th>Period</th><th>Principal</th><th>Interest</th><th>HOA</th><th>Insurance</th><th>Maintenance</th><th>Property Tax</th>
+          <th>Period</th><th>Principal</th><th>Down Payment & Additional Principal</th><th>Interest</th><th>HOA</th><th>Insurance</th><th>Maintenance</th><th>Property Tax</th>
           <th>Closing Cost</th><th>Ownership Cost</th><th>Rent</th><th>Variance</th><th>Ownership Surplus Invested</th>
           <th>Rent Surplus Invested</th><th>Home Value</th><th>Loan Outstanding</th><th>Equity</th><th>Selling Cost</th>
           <th>Sale Realized</th><th>Net Benefit of Ownership</th>
@@ -535,6 +781,7 @@ function renderTable() {
           <tr class="totals-row">
             <td><strong>TOTALS</strong></td>
             <td>${formatCurrency(totals.principal)}</td>
+            <td>${formatCurrency(totals.extraPrincipal)}</td>
             <td>${formatCurrency(totals.interest)}</td>
             <td>${formatCurrency(totals.hoa)}</td>
             <td>${formatCurrency(totals.insurance)}</td>
@@ -550,7 +797,7 @@ function renderTable() {
             <td>${formatCurrency(last.loanOutstanding)}</td>
             <td>${formatCurrency(last.equity)}</td>
             <td>${formatCurrency(last.sellingCost)}</td>
-            <td>${last.saleRealized ? formatCurrency(last.saleRealized) : ''}</td>
+            <td>${formatCurrency(last.saleRealized)}</td>
             <td class="${last.netBenefit < 0 ? 'negative' : 'positive'}">${formatCurrency(last.netBenefit)}</td>
           </tr>
         </tbody>
@@ -559,7 +806,7 @@ function renderTable() {
 
     // CSV rows (monthly)
     latestRows = monthlyDetails.map(d => [
-      d.periodLabel, d.principal.toFixed(2), d.interest.toFixed(2), d.hoa.toFixed(2), d.insurance.toFixed(2),
+      d.periodLabel, d.principal.toFixed(2), d.extraPrincipal.toFixed(2), d.interest.toFixed(2), d.hoa.toFixed(2), d.insurance.toFixed(2),
       d.maintenance.toFixed(2), d.propertyTax.toFixed(2), d.closingCostBuy.toFixed(2), d.ownershipCost.toFixed(2),
       d.rent.toFixed(2), d.variance.toFixed(2), d.ownershipInvested.toFixed(2), d.rentInvested.toFixed(2),
       d.homeValue.toFixed(2), d.loanOutstanding.toFixed(2), d.equity.toFixed(2), d.sellingCost.toFixed(2),
@@ -569,7 +816,7 @@ function renderTable() {
   } else {
     // YEARLY aggregation
     latestHeaders = [
-      "Year","Principal","Interest","HOA","Insurance","Maintenance","Property Tax",
+      "Year","Principal","Down Payment & Additional Principal","Interest","HOA","Insurance","Maintenance","Property Tax",
       "Closing Cost (Buy)","Ownership Cost","Rent","Variance","Ownership Surplus Invested (EOY)",
       "Rent Surplus Invested (EOY)","Home Value (EOY)","Loan Outstanding (EOY)","Equity (EOY)",
       "Selling Cost (at sale)","Sale Realized (at sale)","Net Benefit of Ownership (EOY)"
@@ -581,11 +828,11 @@ function renderTable() {
       const start = (y - 1) * 12;
       const slice = monthlyDetails.slice(start, start + 12);
       const endSnap = slice[slice.length - 1];
-      // Sums for flows
       const sum = (k) => slice.reduce((s,d)=>s + d[k], 0);
       yearRows.push({
         year: y,
         principal: sum('principal'),
+        extraPrincipal: sum('extraPrincipal'),
         interest: sum('interest'),
         hoa: sum('hoa'),
         insurance: sum('insurance'),
@@ -600,8 +847,8 @@ function renderTable() {
         homeValue: endSnap.homeValue,
         loanOutstanding: endSnap.loanOutstanding,
         equity: endSnap.equity,
-        sellingCost: endSnap.sellingCost,     // only non-zero in final year
-        saleRealized: endSnap.saleRealized,   // only non-zero in final year
+        sellingCost: endSnap.sellingCost,
+        saleRealized: endSnap.saleRealized,
         netBenefit: endSnap.netBenefit
       });
     }
@@ -610,6 +857,7 @@ function renderTable() {
       <tr>
         <td><strong>Year ${r.year}</strong></td>
         <td>${formatCurrency(r.principal)}</td>
+        <td>${formatCurrency(r.extraPrincipal)}</td>
         <td>${formatCurrency(r.interest)}</td>
         <td>${formatCurrency(r.hoa)}</td>
         <td>${formatCurrency(r.insurance)}</td>
@@ -625,14 +873,14 @@ function renderTable() {
         <td>${formatCurrency(r.loanOutstanding)}</td>
         <td>${formatCurrency(r.equity)}</td>
         <td>${formatCurrency(r.sellingCost)}</td>
-        <td>${r.saleRealized ? formatCurrency(r.saleRealized) : ''}</td>
+        <td>${formatCurrency(r.saleRealized)}</td>
         <td class="${r.netBenefit < 0 ? 'negative' : 'positive'}">${formatCurrency(r.netBenefit)}</td>
       </tr>
     `).join('');
 
-    // Totals row across years for flows; balances from final snapshot
     const totals = {
       principal: yearRows.reduce((s,r)=>s+r.principal,0),
+      extraPrincipal: yearRows.reduce((s,r)=>s+r.extraPrincipal,0),
       interest: yearRows.reduce((s,r)=>s+r.interest,0),
       hoa: yearRows.reduce((s,r)=>s+r.hoa,0),
       insurance: yearRows.reduce((s,r)=>s+r.insurance,0),
@@ -648,7 +896,7 @@ function renderTable() {
     mount.innerHTML = `
       <div class="table-container"><table>
         <thead><tr>
-          <th>Year</th><th>Principal</th><th>Interest</th><th>HOA</th><th>Insurance</th><th>Maintenance</th><th>Property Tax</th>
+          <th>Year</th><th>Principal</th><th>Down Payment & Additional Principal</th><th>Interest</th><th>HOA</th><th>Insurance</th><th>Maintenance</th><th>Property Tax</th>
           <th>Closing Cost</th><th>Ownership Cost</th><th>Rent</th><th>Variance</th><th>Ownership Surplus Invested (EOY)</th>
           <th>Rent Surplus Invested (EOY)</th><th>Home Value (EOY)</th><th>Loan Outstanding (EOY)</th><th>Equity (EOY)</th>
           <th>Selling Cost</th><th>Sale Realized</th><th>Net Benefit of Ownership (EOY)</th>
@@ -658,6 +906,7 @@ function renderTable() {
           <tr class="totals-row">
             <td><strong>TOTALS</strong></td>
             <td>${formatCurrency(totals.principal)}</td>
+            <td>${formatCurrency(totals.extraPrincipal)}</td>
             <td>${formatCurrency(totals.interest)}</td>
             <td>${formatCurrency(totals.hoa)}</td>
             <td>${formatCurrency(totals.insurance)}</td>
@@ -673,7 +922,7 @@ function renderTable() {
             <td>${formatCurrency(last.loanOutstanding)}</td>
             <td>${formatCurrency(last.equity)}</td>
             <td>${formatCurrency(last.sellingCost)}</td>
-            <td>${last.saleRealized ? formatCurrency(last.saleRealized) : ''}</td>
+            <td>${formatCurrency(last.saleRealized)}</td>
             <td class="${last.netBenefit < 0 ? 'negative' : 'positive'}">${formatCurrency(last.netBenefit)}</td>
           </tr>
         </tbody>
@@ -682,28 +931,56 @@ function renderTable() {
 
     // CSV rows (yearly)
     latestRows = yearRows.map(r => [
-      `Year ${r.year}`, r.principal.toFixed(2), r.interest.toFixed(2), r.hoa.toFixed(2), r.insurance.toFixed(2),
+      `Year ${r.year}`, r.principal.toFixed(2), r.extraPrincipal.toFixed(2), r.interest.toFixed(2), r.hoa.toFixed(2), r.insurance.toFixed(2),
       r.maintenance.toFixed(2), r.propertyTax.toFixed(2), r.closingCostBuy.toFixed(2), r.ownershipCost.toFixed(2),
       r.rent.toFixed(2), r.variance.toFixed(2), r.ownershipInvested.toFixed(2), r.rentInvested.toFixed(2),
       r.homeValue.toFixed(2), r.loanOutstanding.toFixed(2), r.equity.toFixed(2), r.sellingCost.toFixed(2),
-      r.saleRealized.toFixed(2), r.netBenefit.toFixed(2)
+      (r.saleRealized||0).toFixed(2), r.netBenefit.toFixed(2)
     ]);
   }
 }
 
-// CSV helpers
+// CSV helpers ------------------------------------
 function toCsvValue(v) {
   const s = String(v);
   if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
   return s;
 }
-function downloadCSV(headers, rows, filename='table.csv') {
-  const csv = [ headers.map(toCsvValue).join(','), ...rows.map(r => r.map(toCsvValue).join(',')) ].join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+
+// NEW: robust CSV downloader (works with Excel, Numbers, Google Sheets)
+function downloadCSV(headers, rows, filename = 'table.csv') {
+  if (!Array.isArray(rows) || rows.length === 0) {
+    alert('No table data to download yet — run the calculation first.');
+    return;
+  }
+
+  const EOL = '\r\n';   // Excel-friendly newlines
+  const BOM = '\uFEFF'; // Helps Excel detect UTF-8
+
+  const csv = [
+    headers.map(toCsvValue).join(','),
+    ...rows.map(r => r.map(toCsvValue).join(','))
+  ].join(EOL);
+
+  const blob = new Blob([BOM, csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = filename;
-  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
+
+// Bootstrapping of extra principal UI -------------
+window.addEventListener('DOMContentLoaded', () => {
+  maybeAppendAnotherRow();
+  document.getElementById('yearsOwned').addEventListener('input', refreshYearOptionsInRows);
+  const cents = document.getElementById('toggleCents');
+  cents?.addEventListener('change', () => { compareCosts(); });
+  document.getElementById('netBenefitMode')?.addEventListener('change', () => { compareCosts(); });
+});
 </script>
 </body>
 </html>
