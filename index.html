@@ -79,25 +79,117 @@
     .link { color:#007aff; cursor:pointer; text-decoration:underline; }
     .danger { color:#ff3b30; cursor:pointer; }
     .toolbar { display:flex; gap:.75rem; align-items:center; flex-wrap:wrap; justify-content:center; margin-top:.5rem; }
-  </style>
+
+/* ---- Lightweight, design-matched tooltips ---- */
+.has-tip {
+  position: relative;
+  cursor: help;
+  text-decoration: underline dotted rgba(0,0,0,.25);
+  text-underline-offset: 2px;
+  border-radius: 4px; /* for focus ring */
+}
+.has-tip:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(0,122,255,.12); /* matches your focus styles */
+}
+
+/* Balloon */
+.has-tip::before {
+  content: attr(data-tip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 12px);
+  transform: translate(-50%, 6px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .15s ease, transform .15s ease;
+  background: rgba(255,255,255,.98);
+  color: #1d1d1f;
+  border: 1px solid rgba(0,0,0,.12);
+  border-radius: 12px;               /* matches your cards */
+  box-shadow: 0 8px 24px rgba(0,0,0,.12);
+  padding: 10px 12px;
+  font-size: .875rem;
+  line-height: 1.35;
+  max-width: 320px;
+  min-width: 220px;
+  white-space: pre-line;             /* lets us use \A (newlines) */
+  z-index: 20;
+}
+
+/* Arrow */
+.has-tip::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 6px);
+  transform: translate(-50%, 6px) rotate(45deg);
+  width: 10px; height: 10px;
+  background: rgba(255,255,255,.98);
+  border-left: 1px solid rgba(0,0,0,.12);
+  border-top: 1px solid rgba(0,0,0,.12);
+  opacity: 0;
+  transition: opacity .15s ease, transform .15s ease;
+  z-index: 19;
+}
+
+/* Show on hover/focus (and when toggled for touch) */
+.has-tip:hover::before,
+.has-tip:hover::after,
+.has-tip:focus-visible::before,
+.has-tip:focus-visible::after,
+.has-tip[data-open="true"]::before,
+.has-tip[data-open="true"]::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* If you provide a US average, we append it nicely. */
+.has-tip[data-average]::before {
+  content: attr(data-tip) "\A\A" "US average: " attr(data-average);
+  /* Example: set data-average="~0.5%–1.0% of home value/yr (varies by state)" */
+}
+  /* --- Toolbar typography & alignment overrides --- */
+.toolbar { 
+  font-size: 1rem;            /* pick the size you want for all toolbar items */
+  line-height: inherit;
+}
+
+.toolbar label,
+.toolbar input,
+.toolbar select,
+.toolbar span {
+  font-family: inherit;
+  font-size: inherit;         /* everything inherits 1rem */
+  line-height: inherit;
+  color: inherit;
+}
+
+/* keep the label on one line */
+.toolbar .has-tip { white-space: nowrap; }
+
+/* push the select to the right when desired */
+.push-right { margin-left: auto; }
+
+/* optional: minimal select reset so it matches your UI */
+.toolbar select {
+  border: 1px solid rgba(0,0,0,.15);
+  border-radius: 8px;
+  padding: .25rem .5rem;
+  background: #fff;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+
+</style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
 </head>
 <body>
 <div class="container">
-  <h1>Rent vs Mortgage</h1>
+  <h1>Rent vs Buy Calculator</h1>
 
-  <div class="toolbar">
-    <!-- (1) Show cents toggle -->
-    <label class="chip"><input type="checkbox" id="toggleCents" checked> Show cents</label>
-
-    <!-- (3) Net benefit selling cost mode -->
-    <label class="chip">Net benefit mode
-      <select id="netBenefitMode">
-        <option value="sale_only" selected>Deduct selling cost only at sale</option>
-        <option value="every_month">Deduct selling cost every month</option>
-      </select>
-    </label>
-  </div>
 
   <h2>🏠 Home Purchase</h2>
   <div class="input-grid">
@@ -109,49 +201,100 @@
         <select id="downPaymentType"><option value="percent">% of Home Price</option><option value="amount">Fixed Amount</option></select>
       </div>
     </div>
-    <div class="input-group"><label for="interestRate">Mortgage Interest Rate (%)</label><input type="number" id="interestRate" value="5" step="0.01" min="0"></div>
+    <div class="input-group"><label for="interestRate"><span class="has-tip"
+        tabindex="0"
+        data-tip="Current U.S. mortgage rates average about 6.5%–6.6% for a 30-year fixed loan (Aug. 2025).">
+Mortgage Interest Rate (%)</label><input type="number" id="interestRate" value="6.5" step="0.01" min="0"></div>
     <div class="input-group"><label for="loanTerm">Loan Term (years)</label><input type="number" id="loanTerm" value="30" min="1"></div>
-    <div class="input-group"><label for="customMonthlyPayment">Custom Monthly Payment ($ - Optional)</label><input type="number" id="customMonthlyPayment" placeholder="Leave blank for calculated" min="0"></div>
-    <div class="input-group"><label for="closingCostsBuy">Closing Costs on Purchase (%)</label><input type="number" id="closingCostsBuy" value="2" step="0.01" min="0"></div>
-    <div class="input-group"><label for="closingCostsSell">Selling Costs (%)</label><input type="number" id="closingCostsSell" value="6" step="0.01" min="0"></div>
-    <div class="input-group"><label for="appreciationRate">Home Appreciation Rate (%)</label><input type="number" id="appreciationRate" value="3" step="0.01"></div>
-    <div class="input-group"><label for="savingsReturnRate">Investment Return on Savings (%)</label><input type="number" id="savingsReturnRate" value="6" step="0.01" min="0"></div>
+    <div class="input-group"><label for="customMonthlyPayment"><span class="has-tip"
+        tabindex="0"
+        data-tip="Entering a monthly payment overrides the loan term and recalculates how long it will take to pay off the loan.">
+Custom Monthly Payment ($ - Optional)</label><input type="number" id="customMonthlyPayment" placeholder="Leave blank for calculated" min="0"></div>
+    <div class="input-group"><label for="closingCostsBuy"><span class="has-tip"
+        tabindex="0"
+        data-tip="Closing costs usually run 2%–5% of the loan or purchase price and cover fees such as appraisal, title search, title insurance, lender charges, and escrow services.">
+Closing Costs on Purchase (%)</label><input type="number" id="closingCostsBuy" value="2" step="0.01" min="0"></div>
+    <div class="input-group"><label for="closingCostsSell"><span class="has-tip"
+        tabindex="0"
+        data-tip="Selling costs are the expenses you pay when selling your home, such as agent commissions, title and escrow fees, and transfer taxes. They typically total around 6%–8% of the home’s selling price, though the exact amount can vary by location and services.">
+
+
+
+
+Selling Costs (%)</label><input type="number" id="closingCostsSell" value="6" step="0.01" min="0"></div>
+    <div class="input-group"><label for="appreciationRate"><span class="has-tip"
+        tabindex="0"
+        data-tip="The home appreciation rate estimates how much your property value will grow each year. It’s important for projecting future equity and resale value. Historically, U.S. home prices have risen about 3%–4% annually, though this varies widely by market and economic conditions.">
+
+Home Appreciation Rate (%)</label><input type="number" id="appreciationRate" value="3" step="0.01"></div>
+    <div class="input-group"><label for="savingsReturnRate"><span class="has-tip"
+        tabindex="0"
+        data-tip="Interest return on savings is used to estimate the opportunity cost of not investing your down payment. The calculator also assumes that any monthly cost difference between renting and buying is invested at this rate. As a benchmark, long-term stock market returns average around 5%–7% annually, while safer options like bonds or high-yield savings accounts may return 3%–4%.">
+Investment Return on Savings (%)</label><input type="number" id="savingsReturnRate" value="6" step="0.01" min="0"></div>
   </div>
 
   <h3>🧾 Property Tax</h3>
   <div class="input-grid">
     <div class="input-group">
-      <label for="propertyTaxValue">Property Tax</label>
+      <label for="propertyTaxValue">
+  <span class="has-tip"
+        tabindex="0"
+        data-tip="Property taxes are billed once a year by local governments - typically your city, county, school district, and similar agencies. To ballpark the tax on a specific home, look it up on your area’s appraisal district or assessor website; those records are usually public. In many places, homeowners pay about 1%–3% of a home’s value annually.">
+    Property Tax
+  </span>
+</label>
       <div class="input-with-select">
-        <input type="number" id="propertyTaxValue" value="1.2" step="0.01" min="0">
+        <input type="number" id="propertyTaxValue" value="1.5" step="0.01" min="0">
         <select id="propertyTaxType"><option value="percent">% of Home Price</option><option value="amount">Fixed Annual Amount</option></select>
       </div>
     </div>
     <div class="input-group"><label for="propertyTaxInflation">Property Tax Inflation (%)</label><input type="number" id="propertyTaxInflation" value="3" step="0.01" min="0"></div>
   </div>
 
-  <h3>🛡️ Home Insurance</h3>
+  <h2>🛡️ Home Insurance</h2>
   <div class="input-grid">
     <div class="input-group">
-      <label for="homeInsuranceValue">Home Insurance</label>
+      <label for="homeInsuranceValue">
+<span class="has-tip"
+        tabindex="0"
+        data-tip="Lenders typically require homeowners insurance for major hazards, and conventional loans with under 20% down usually add PMI. As a quick benchmark, U.S. homeowners insurance averages about 0.6%–0.7% of a home’s value per year (premiums are based on rebuild cost and vary by location). To find local figures, check state averages from the NAIC/Insurance Information Institute, consumer trackers like Bankrate, or your state insurance department and local carrier quotes.">
+Home Insurance</label>
       <div class="input-with-select">
-        <input type="number" id="homeInsuranceValue" value="1200" min="0">
+        <input type="number" id="homeInsuranceValue" value="1500" min="0">
         <select id="homeInsuranceType"><option value="amount">Fixed Annual Amount</option><option value="percent">% of Home Price</option></select>
       </div>
     </div>
     <div class="input-group"><label for="insuranceInflation">Insurance Inflation (%)</label><input type="number" id="insuranceInflation" value="3" step="0.01" min="0"></div>
   </div>
 
-  <h3>🏘️ HOA Fees</h3>
-  <div class="input-grid">
-    <div class="input-group"><label for="hoaFees">HOA Fees (Monthly $)</label><input type="number" id="hoaFees" value="200" min="0"></div>
-    <div class="input-group"><label for="hoaInflation">HOA Inflation (%)</label><input type="number" id="hoaInflation" value="3" step="0.01" min="0"></div>
+ <h2>🏘️ HOA Fees</h2>
+<div class="input-grid">
+  <div class="input-group">
+    <label for="hoaFees">
+      <span class="has-tip"
+        tabindex="0"
+        data-tip="HOA fees are mandatory monthly charges set by homeowners associations to cover shared community costs such as landscaping, amenities, maintenance, and sometimes utilities. They vary widely by location and services, typically ranging from under $100 to several hundred dollars per month, and can increase over time.">
+        HOA Fees (Monthly $)
+      </span>
+    </label>
+    <input type="number" id="hoaFees" value="200" min="0">
   </div>
+  <div class="input-group">
+    <label for="hoaInflation">HOA Inflation (%)</label>
+    <input type="number" id="hoaInflation" value="3" step="0.01" min="0">
+  </div>
+</div>
 
-  <h3>🛠️ Maintenance</h3>
+
+
+  <h2>🛠️ Maintenance</h2>
   <div class="input-grid">
     <div class="input-group">
-      <label for="maintenanceValue">Maintenance</label>
+      <label for="maintenanceValue">
+<span class="has-tip"
+        tabindex="0"
+        data-tip="Maintenance costs are an important but often overlooked part of homeownership. They cover routine upkeep, repairs, and replacements—everything from HVAC servicing to roof work and appliance fixes. A common budgeting rule is to set aside about 1% of the home’s value per year for maintenance.">
+Maintenance</label>
       <div class="input-with-select">
         <input type="number" id="maintenanceValue" value="1" step="0.01" min="0">
         <select id="maintenanceType"><option value="percent">% of Home Price (Annual)</option><option value="amount">Fixed Annual Amount</option></select>
@@ -160,20 +303,17 @@
     <div class="input-group"><label for="maintenanceInflation">Maintenance Inflation (%)</label><input type="number" id="maintenanceInflation" value="3" step="0.01" min="0"></div>
   </div>
 
-  <div class="single-input">
-    <div class="input-group"><label for="yearsOwned">Years Owned</label><input type="number" id="yearsOwned" value="10" min="1"></div>
-  </div>
 
-  <h3>💡 Additional Principal Payments</h3>
+  <h2>💡 Additional Principal Payments</h2>
   <div class="input-grid">
     <div class="input-group" style="grid-column: 1 / -1">
-      <label class="muted">Manual extra payments. A new row appears once the current row is complete. All figures are applied in the month selected.</label>
+      <label class="muted">Annual extra payments. A new row appears after each entry. Payments apply in the selected month (e.g., Year 1, Month 12 = 12th month of ownership).</label>
       <div id="extraPrincipalContainer"></div>
-      <div class="muted" style="margin-top:.5rem">Tip: Change <span class="chip">Years Owned</span> to expand year choices.</div>
+      <div class="muted" style="margin-top:.5rem">Tip: Making extra payments on your mortgage - whether from a bonus, tax refund, or any additional income - can reduce your interest costs and significantly shorten the length of your loan.</div>
     </div>
 
     <div class="input-group" style="grid-column: 1 / -1">
-      <label><strong>Recurring annual extra payment until loan payoff</strong></label>
+      <label class="muted">Recurring annual extra payment until loan payoff</strong></label>
       <div class="row">
         <select id="recurringExtraMonth">
             
@@ -200,9 +340,50 @@
 
   <h2>🏢 Rental Details</h2>
   <div class="input-grid">
-    <div class="input-group"><label for="monthlyRent">Monthly Rent ($)</label><input type="number" id="monthlyRent" value="2200" min="0"></div>
+    <div class="input-group"><label for="monthlyRent"><span class="has-tip"
+        tabindex="0"
+        data-tip="Renting offers flexibility, lower upfront costs, and freedom from expenses like maintenance, taxes, and selling fees. However, it provides less long-term stability - rents often rise over time, while mortgage payments are typically fixed and help build equity.">
+
+
+
+Monthly Rent ($)</label><input type="number" id="monthlyRent" value="3000" min="0"></div>
     <div class="input-group"><label for="rentInflation">Annual Rent Increase (%)</label><input type="number" id="rentInflation" value="3" step="0.01"></div>
   </div>
+
+ <h2>⌛ Years Owned</h2>
+<div class="single-input">
+  <div class="input-group">
+    <label for="yearsOwned">
+      <span class="has-tip"
+        tabindex="0"
+        data-tip="Enter how many years you plan to own the home. This affects calculations such as total costs, equity built, and net benefit of ownership over that duration.">
+        Years Owned
+      </span>
+    </label>
+    <input type="number" id="yearsOwned" value="10" min="1">
+  </div>
+</div>
+
+ <div class="toolbar">
+  <!-- (1) Show cents toggle -->
+  <label class="chip">
+    <input type="checkbox" id="toggleCents"> Show cents
+  </label>
+
+  <!-- (3) Net benefit selling cost mode -->
+  <label class="chip">
+    <span class="has-tip"
+      tabindex="0"
+      style="white-space: nowrap;" 
+      data-tip="If you select “deduct selling cost every month,” the table, once calculated, will show selling costs at each step, giving a true net benefit if sold at any point.">
+      Net Benefit Mode:   
+    </span>
+    <select id="netBenefitMode" class="push-right">
+      <option value="sale_only" selected>Deduct selling cost only at sale</option>
+      <option value="every_month">Deduct selling cost every month</option>
+    </select>
+  </label>
+</div>
 
   <div class="primary-actions">
     <button onclick="compareCosts()">Calculate Comparison</button>
@@ -211,6 +392,9 @@
 
   <div id="results" class="results-container"></div>
 </div>
+
+
+
 
 <script>
 // (1) Show cents toggle: state is derived from checkbox
@@ -585,24 +769,24 @@ const netBenefit2 = equity2 - rentInvested + ownershipInvested - sellClosingCost
     <div class="summary">
       <h3>📊 Summary After ${yearsOwned} Years</h3>
       <div class="summary-grid">
-        <div class="summary-item"><strong>Total Principal Paid</strong>${formatCurrency(totalPrincipalPaid)}</div><div class="summary-item"><strong>Total Interest Paid</strong>${formatCurrency(interestTotal)}</div>
-        <div class="summary-item"><strong>Total Rent Paid</strong>${formatCurrency(totalRent)}</div>
-        <div class="summary-item"><strong>Final Home Value</strong>${formatCurrency(finalSnap.homeValue)}</div>
-        <div class="summary-item"><strong>Total Equity</strong>${formatCurrency(finalEquity)}</div>
-        <div class="summary-item"><strong>Ownership Surplus Invested</strong>${formatCurrency(finalSnap.ownershipInvested)}</div>
-        <div class="summary-item"><strong>Rent Surplus Invested</strong>${formatCurrency(finalSnap.rentInvested)}</div>
+        <div class="summary-item"><strong>Total Principal Paid</strong> ${formatCurrency(totalPrincipalPaid)}</div>
+        <div class="summary-item"><strong>Total Interest Paid</strong> ${formatCurrency(interestTotal)}</div>
+        <div class="summary-item"><strong>Total Rent Paid</strong> ${formatCurrency(totalRent)}</div>
+        <div class="summary-item"><strong>Final Home Value</strong> ${formatCurrency(finalSnap.homeValue)}</div>
+        <div class="summary-item"><strong>Total Equity</strong> ${formatCurrency(finalEquity)}</div>
+        <div class="summary-item"><strong>Ownership Surplus Invested</strong> ${formatCurrency(finalSnap.ownershipInvested)}</div>
+        <div class="summary-item"><strong>Rent Surplus Invested</strong> ${formatCurrency(finalSnap.rentInvested)}</div>
         <div class="summary-item"><strong>Net Benefit of Ownership</strong>
-          <span class="${finalNetBenefit < 0 ? 'negative' : 'positive'}">${formatCurrency(finalNetBenefit)}</span>
+          <span class= "${finalNetBenefit < 0 ? 'negative' : 'positive'}">${formatCurrency(finalNetBenefit)}</span>
         </div>
       </div>
-      <div class="muted" style="margin-top:.5rem">Net benefit mode: <strong>${document.getElementById('netBenefitMode').selectedOptions[0].text}</strong></div>
     </div>
 
     <div class="table-controls">
       <label for="tableModeSelect"><strong>Table view:</strong></label>
       <select id="tableModeSelect">
-        <option value="monthly" selected>Monthly (detailed)</option>
-        <option value="yearly">Yearly (aggregated)</option>
+        <option value="monthly" selected>Monthly</option>
+        <option value="yearly">Yearly</option>
       </select>
     </div>
     <div id="tableMount"></div>
@@ -613,7 +797,7 @@ const netBenefit2 = equity2 - rentInvested + ownershipInvested - sellClosingCost
         <canvas id="chartOutlay"></canvas>
       </div>
       <div class="chart-card">
-        <h4>Equity + Ownership Surplus Invested vs Renter Surplus Invested + Net Benefit of Ownership</h4>
+        <h4>Equity + Ownership Surplus Invested vs Renter Surplus Invested and Net Benefit of Ownership</h4>
         <canvas id="chartEquity"></canvas>
       </div>
     </div>
