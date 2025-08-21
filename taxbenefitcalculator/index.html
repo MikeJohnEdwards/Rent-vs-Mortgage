@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Homebuyer Tax-Benefit Calculator</title>
+  <style>
+    /* --- Base style to match your site --- */
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
+      margin: 0; padding: 2rem; background: #f5f5f7; min-height: 100vh; color: #1d1d1f; line-height: 1.47059;
+      -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+    }
+    .container {
+      max-width: 1200px; margin: 0 auto; background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: saturate(180%) blur(20px); border-radius: 18px; padding: 2rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12); border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+    h1 { text-align: center; font-size: 2.25rem; font-weight: 600; margin-bottom: 1rem; letter-spacing: -0.015em; }
+    h2 { font-size: 1.5rem; font-weight: 600; margin: 2rem 0 1rem; letter-spacing: -0.01em; }
+    h3 { font-size: 1.25rem; font-weight: 600; margin: 1.5rem 0 1rem; letter-spacing: -0.01em; }
+
+    .input-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+    .input-group {
+      background: rgba(255,255,255,0.7); padding: 1.1rem; border-radius: 12px; border: 1px solid rgba(0,0,0,0.1);
+      transition: all .2s cubic-bezier(.4,0,.25,1); backdrop-filter: blur(10px);
+    }
+    .input-group:hover { background: rgba(255,255,255,.9); box-shadow: 0 4px 20px rgba(0,0,0,.08); transform: translateY(-1px); border-color: rgba(0,0,0,.15); }
+    label { display: block; margin-bottom: .5rem; font-weight: 500; font-size: .9rem; letter-spacing: -0.01em; }
+    input[type="number"], input[type="text"], select {
+      width: 100%; padding: 12px 14px; border: 1px solid rgba(0,0,0,.15); border-radius: 8px; font-size: 1rem;
+      transition: all .2s cubic-bezier(.4,0,.25,1); background: rgba(255,255,255,.9);
+    }
+    input[type="number"]:focus, select:focus, input[type="text"]:focus {
+      outline: none; border-color: #007aff; box-shadow: 0 0 0 4px rgba(0,122,255,.12); background: #fff;
+    }
+    .input-with-select { display: flex; gap: 8px; }
+    .input-with-select input, .input-with-select select { flex: 1; }
+
+    button {
+      display: inline-block; padding: 12px 18px; background: #007aff; color: #fff; border: none; border-radius: 12px;
+      font-size: 1rem; font-weight: 600; cursor: pointer; transition: all .2s cubic-bezier(.4,0,.25,1); box-shadow: 0 2px 8px rgba(0,122,255,.25);
+    }
+    .primary-actions { display: flex; justify-content: center; gap: .75rem; margin: 1rem 0; flex-wrap: wrap; }
+    button:hover { background: #0051d5; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,122,255,.35); }
+    button:active { transform: translateY(0); background: #004fc7; }
+
+    .toolbar { display:flex; gap:.75rem; align-items:center; flex-wrap:wrap; justify-content:center; margin-top:.5rem; }
+    .chip { display:inline-flex; align-items:center; gap:.5rem; background:#f2f2f7; padding:.35rem .7rem; border-radius:999px; font-size:.9rem; }
+    .muted { color:#6e6e73; font-size:.9rem; }
+
+    .results { margin-top: 1rem; }
+    .summary {
+      background: linear-gradient(135deg,#f8f9fa 0%,#e9ecef 100%); padding: 1.25rem; border-radius: 15px; margin-bottom: 1rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,.1);
+    }
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(260px,1fr)); gap: 12px; }
+    .summary-item { background: #fff; padding: 12px; border-radius: 10px; border-left: 4px solid #3498db; box-shadow: 0 2px 4px rgba(0,0,0,.08); }
+    .summary-item h4 { margin: 0 0 6px; font-size: .95rem; font-weight: 600; }
+    .summary-item .value { font-size: 1.1rem; font-variant-numeric: tabular-nums; }
+
+    details.breakdown { background:#fff; border-radius:12px; border:1px solid rgba(0,0,0,.12); padding: .75rem 1rem; }
+    details.breakdown summary { cursor:pointer; font-weight:600; }
+    details.breakdown .row { display:grid; grid-template-columns: 1.2fr 1fr; gap:.75rem; padding:.6rem 0; border-bottom:1px dashed rgba(0,0,0,.08); }
+    details.breakdown .row:last-child{ border-bottom:none; }
+    details.breakdown .ctx { grid-column: 1 / -1; background: #f8f8fb; border: 1px solid rgba(0,0,0,.06); border-radius: 10px; padding: .6rem .75rem; color:#4b4b50; font-size:.9rem; }
+
+ /* Lightweight, design-matched tooltips */
+.has-tip {
+  position: relative;
+  cursor: help;
+  text-decoration: underline dotted rgba(0,0,0,.25);
+  text-underline-offset: 2px;
+  border-radius: 4px; /* focus ring */
+  display: inline-block; /* ensures correct positioning box */
+}
+.has-tip:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(0,122,255,.12);
+}
+
+/* Balloon */
+.has-tip::before {
+  content: attr(data-tip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 12px);
+  transform: translate(-50%, 6px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .15s ease, transform .15s ease;
+  background: rgba(255,255,255,.98);
+  color: #1d1d1f;
+  border: 1px solid rgba(0,0,0,.12);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.12);
+  padding: 10px 12px;
+  font-size: .875rem;
+  line-height: 1.35;
+  max-width: 320px;
+  min-width: 220px;
+  white-space: pre-line;
+  z-index: 20;
+}
+
+/* Arrow */
+.has-tip::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 6px);
+  transform: translate(-50%, 6px) rotate(45deg);
+  width: 10px; height: 10px;
+  background: rgba(255,255,255,.98);
+  border-left: 1px solid rgba(0,0,0,.12);
+  border-top: 1px solid rgba(0,0,0,.12);
+  opacity: 0;
+  transition: opacity .15s ease, transform .15s ease;
+  z-index: 19;
+}
+
+/* Show on hover/focus (and for touch via data-open) */
+.has-tip:hover::before,
+.has-tip:hover::after,
+.has-tip:focus-visible::before,
+.has-tip:focus-visible::after,
+.has-tip[data-open="true"]::before,
+.has-tip[data-open="true"]::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+
+
+
+
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1>🏠 Homebuyer Tax‑Benefit Calculator</h1>
+
+    <!-- Toolbar: Year/Regime and Cents -->
+    <div class="toolbar" role="group" aria-label="Calculator settings">
+      <label class="chip">
+        <span class="has-tip" tabindex="0" data-tip="Choose the tax year to use. The standard deductions and the SALT cap increased in 2025.">Tax Year / Regime</span>
+        <select id="taxProfile">
+          <option value="2025" selected>2025</option>
+          <option value="2024">2024</option>
+        </select>
+      </label>
+      <label class="chip"><input type="checkbox" id="toggleCents"> Show cents</label>
+    </div>
+
+    <h2>Filing & Income</h2>
+    <div class="input-grid">
+      <div class="input-group">
+        <label for="filingStatus">Filing Status</label>
+        <select id="filingStatus">
+          <option value="single">Single</option>
+          <option value="mfj">Married Filing Jointly</option>
+          <option value="mfs">Married Filing Separately</option>
+          <option value="hoh">Head of Household</option>
+        </select>
+      </div>
+
+      <div class="input-group">
+        <label for="federalMarginalRate"><span class="has-tip" tabindex="0" data-tip="Your federal marginal tax rate used to value the incremental deduction.">Federal Marginal Rate (%)</span></label>
+        <input type="number" id="federalMarginalRate" min="0" max="60" step="1" value="24" />
+      </div>
+
+      <div class="input-group">
+        <label for="stateMarginalRate"><span class="has-tip" tabindex="0" data-tip="Optional: apply a state marginal rate to estimate additional savings.">State/Local Income Tax Marginal Rate (%)</span></label>
+        <input type="number" id="stateMarginalRate" min="0" max="20" step="0.1" value="0" />
+      </div>
+    </div>
+
+    <h2>Home‑Related Deductions</h2>
+    <div class="input-grid">
+      <div class="input-group" style="grid-column:1/-1">
+        <label class="chip"><input type="checkbox" id="useEstimator"> Calculate estimated interest based on loan and mortgage rate</label>
+      </div>
+
+      <div class="input-group">
+        <label for="mortgageInterestInput">Mortgage Interest (annual $)</label>
+        <input type="number" id="mortgageInterestInput" min="0" value="20000" />
+        <div class="muted">If estimator is ON, this value is ignored.</div>
+      </div>
+
+      <div class="input-group">
+        <label for="loanValue">Loan Value ($)</label>
+        <input type="number" id="loanValue" min="0" placeholder="e.g., 320000" />
+      </div>
+
+      <div class="input-group">
+        <label for="mortgageRate">Mortgage Rate (% APR)</label>
+        <input type="number" id="mortgageRate" min="0" step="0.01" placeholder="e.g., 6.5" />
+      </div>
+    </div>
+
+    <h2>SALT (State & Local Taxes)</h2>
+    <div class="input-grid">
+      <div class="input-group">
+        <label for="propertyTax">Property Tax (annual $)</label>
+        <input type="number" id="propertyTax" min="0" value="6000" />
+      </div>
+
+      <div class="input-group">
+        <label for="stateIncomeTax">State/Local Income Tax (annual $)</label>
+        <input type="number" id="stateIncomeTax" placeholder="$ amount" min="0" value="5000" />
+        <div class="muted">Property tax + state/local income tax together cannot exceed the SALT cap.</div>
+      </div>
+
+      <div class="input-group">
+        <label for="otherItemized">Other Itemized (non‑home $)</label>
+        <input type="number" id="otherItemized" min="0" value="3000" />
+      </div>
+    </div>
+
+    <div class="primary-actions">
+      <button id="calcBtn">Calculate</button>
+    </div>
+
+    <div class="results" id="results" aria-live="polite"></div>
+
+    <p class="muted" style="margin-top:1rem">This tool is for education only and not tax advice. Consult a tax professional for your situation.</p>
+  </div>
+
+  <script>
+    // =======================
+    // Constants
+    // =======================
+    const PROFILES = {
+      '2025': {
+        label: '2025',
+        standardDeduction: { single: 15750, mfj: 31500, mfs: 15750, hoh: 23625 },
+        saltCap: 40000
+      },
+      '2024': {
+        label: '2024',
+        standardDeduction: { single: 14600, mfj: 29200, mfs: 14600, hoh: 21900 },
+        saltCap: 10000
+      }
+    };
+
+    // Currency formatting respecting the Show Cents toggle
+    let showCents = false;
+    const fmt = (n) => new Intl.NumberFormat('en-US', { style:'currency', currency:'USD', minimumFractionDigits: showCents?2:0, maximumFractionDigits: showCents?2:0 }).format(n || 0);
+
+    // Simple interest estimator: Loan × Rate (annual)
+    function estimateInterest(loan, ratePct) {
+      const r = (Number(ratePct)||0) / 100;
+      const L = Number(loan)||0;
+      return L * r; // annual simple approximation
+    }
+
+    const clamp0 = (x) => Math.max(0, Number(x)||0);
+
+    // Main calculation
+    function calculate() {
+      const profileKey = document.getElementById('taxProfile').value;
+      const filing = document.getElementById('filingStatus').value;
+      const prof = PROFILES[profileKey];
+
+      const fedMarg = clamp0(document.getElementById('federalMarginalRate').value) / 100;
+      const stMarg  = clamp0(document.getElementById('stateMarginalRate').value) / 100;
+
+      const useEstimator = document.getElementById('useEstimator').checked;
+      const manualInterest = clamp0(document.getElementById('mortgageInterestInput').value);
+      const loanValue = clamp0(document.getElementById('loanValue').value);
+      const mortgageRate = clamp0(document.getElementById('mortgageRate').value);
+      const mortInt = useEstimator ? estimateInterest(loanValue, mortgageRate) : manualInterest;
+
+      // SALT components
+      const propTax = clamp0(document.getElementById('propertyTax').value);
+      const stateIncome = clamp0(document.getElementById('stateIncomeTax').value);
+      const saltCapEff = prof.saltCap;
+
+      // Without home: only state/local income tax counts toward SALT + other itemized
+      const saltWithoutHome = Math.min(saltCapEff, stateIncome);
+      const otherItemized = clamp0(document.getElementById('otherItemized').value);
+      const itemizedWithoutHome = saltWithoutHome + otherItemized;
+
+      // With home: property + state income share SALT
+      const combinedSALT = stateIncome + propTax;
+      const saltWithHome = Math.min(saltCapEff, combinedSALT);
+
+      // Allocate SALT to state first, remainder to property
+      const stateCounted = Math.min(stateIncome, saltCapEff);
+      const saltRoomForProp = Math.max(0, saltCapEff - stateCounted);
+      const allowedPropTax = Math.min(propTax, saltRoomForProp);
+
+      // Itemized with home includes allowed prop tax + allowed mortgage interest + other itemized + state counted
+      const itemizedWithHome = stateCounted + allowedPropTax + mortInt + otherItemized;
+
+      const stdDed = prof.standardDeduction[filing];
+      const baselineDeduction = Math.max(stdDed, itemizedWithoutHome);
+      const withHomeDeduction = Math.max(stdDed, itemizedWithHome);
+      const incrementalDeduction = Math.max(0, withHomeDeduction - baselineDeduction);
+
+      // Savings via marginal rates
+      const fedSavings = incrementalDeduction * fedMarg;
+      const stateSavings = incrementalDeduction * stMarg;
+      const totalSavings = fedSavings + stateSavings;
+
+      return {
+        profileKey, filing, fedMarg, stMarg,
+        mortInt, loanValue, mortgageRate,
+        propTax, stateIncome, saltCapEff,
+        stateCounted, allowedPropTax,
+        itemizedWithoutHome, itemizedWithHome, stdDed, baselineDeduction, withHomeDeduction, incrementalDeduction,
+        fedSavings, stateSavings, totalSavings,
+        useEstimator
+      };
+    }
+
+    // Render
+    function render(r) {
+      const el = document.getElementById('results');
+      if (!r) { el.innerHTML = ''; return; }
+
+      const whichDedBaseline = r.baselineDeduction === r.stdDed ? 'Standard' : 'Itemized (without home)';
+      const whichDedWithHome = r.withHomeDeduction === r.stdDed ? 'Standard' : 'Itemized (with home)';
+
+      el.innerHTML = `
+        <div class="summary">
+          <div class="summary-grid">
+            <div class="summary-item"><h4>Baseline Deduction</h4><div class="value">${fmt(r.baselineDeduction)} <span class="muted">(${whichDedBaseline})</span></div></div>
+            <div class="summary-item"><h4>With‑Home Deduction</h4><div class="value">${fmt(r.withHomeDeduction)} <span class="muted">(${whichDedWithHome})</span></div></div>
+            <div class="summary-item"><h4>Incremental Deduction from Home</h4><div class="value">${fmt(r.incrementalDeduction)}</div></div>
+            <div class="summary-item"><h4>Estimated Federal Savings</h4><div class="value">${fmt(r.fedSavings)}</div></div>
+            <div class="summary-item"><h4>Estimated State Savings</h4><div class="value">${fmt(r.stateSavings)}</div></div>
+            <div class="summary-item"><h4>Total Estimated Savings</h4><div class="value">${fmt(r.totalSavings)}</div></div>
+          </div>
+        </div>
+
+        <details class="breakdown">
+          <summary>See how limits & caps were applied</summary>
+
+          <div class="row">
+            <div>Standard deduction</div><div>${fmt(r.stdDed)}</div>
+            <div class="ctx">From the selected tax profile and filing status.</div>
+          </div>
+
+          <div class="row">
+            <div>SALT cap (effective)</div><div>${fmt(r.saltCapEff)}</div>
+            <div class="ctx">Flat cap for combined state/local income tax and property tax.</div>
+          </div>
+
+          <div class="row">
+            <div>State/Local income tax counted</div><div>${fmt(r.stateCounted)}</div>
+            <div class="ctx">Counted toward SALT first (up to the cap), then any remaining SALT room is available for property tax.</div>
+          </div>
+
+          <div class="row">
+            <div>Property tax allowed within SALT</div><div>${fmt(r.allowedPropTax)}</div>
+            <div class="ctx">= min(Property Tax, SALT cap − State/Local income tax counted).</div>
+          </div>
+
+          <div class="row">
+            <div>Mortgage interest used</div><div>${fmt(r.mortInt)}</div>
+            <div class="ctx">${r.useEstimator ? 'Estimated as Loan Value × Mortgage Rate (annual simple approximation).' : 'Manual entry used as provided.'}</div>
+          </div>
+
+          <div class="row">
+            <div>Itemized (without home)</div><div>${fmt(r.itemizedWithoutHome)}</div>
+            <div class="ctx">= min(SALT cap, State/Local income tax) + Other Itemized (non‑home). Property tax and mortgage interest are excluded here.</div>
+          </div>
+
+          <div class="row">
+            <div>Itemized (with home)</div><div>${fmt(r.itemizedWithHome)}</div>
+            <div class="ctx">= State/Local income tax counted (within SALT) + Property tax allowed (within SALT) + Mortgage interest + Other Itemized (non‑home).</div>
+          </div>
+
+          <div class="row">
+            <div>Baseline vs With‑Home Deduction</div><div>${fmt(r.baselineDeduction)} vs ${fmt(r.withHomeDeduction)}</div>
+            <div class="ctx">Each equals max(Standard Deduction, Itemized). The incremental deduction from home is their difference when the with‑home amount is larger.</div>
+          </div>
+
+          <div class="row">
+            <div>Estimated savings (marginal‑rate method)</div><div>${fmt(r.totalSavings)}</div>
+            <div class="ctx">Federal: Incremental Deduction × Federal marginal rate. State (optional): Incremental Deduction × State/Local marginal rate. Totals are the sum.</div>
+          </div>
+        </details>
+      `;
+    }
+
+    // UI wiring
+    document.getElementById('toggleCents').addEventListener('change', e => {
+      showCents = e.target.checked; const r = calculate(); render(r);
+    });
+
+    document.getElementById('calcBtn').addEventListener('click', () => {
+      const r = calculate(); render(r);
+    });
+
+    // First paint
+    const initial = calculate();
+    render(initial);
+  </script>
+</body>
+</html>
