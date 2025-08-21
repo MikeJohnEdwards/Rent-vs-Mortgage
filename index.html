@@ -296,8 +296,6 @@ Home Insurance</label>
   </div>
 </div>
 
-
-
   <h2>🛠️ Maintenance</h2>
   <div class="input-grid">
     <div class="input-group">
@@ -398,6 +396,26 @@ Monthly Rent ($)</label><input type="number" id="monthlyRent" value="3000" min="
   <!-- (1) Show cents toggle -->
   <label class="chip">
     <input type="checkbox" id="toggleCents"> Show cents
+  </label>
+
+  <!-- Variance invest percentage (other months) -->
+  <label class="chip" for="varianceInvestPct">
+    <span class="has-tip"
+      tabindex="0"
+      data-tip="Choose what portion of the monthly cost difference (rent vs. ownership) is actually invested. The remainder is treated as spent.">
+      Invest variance (%)
+    </span>
+    <input id="varianceInvestPct" type="number" min="0" max="100" step="5" value="80" style="width:5rem">
+  </label>
+
+  <!-- NEW: Month 1–only percentage -->
+  <label class="chip" for="varianceInvestPctM1">
+    <span class="has-tip"
+      tabindex="0"
+      data-tip="Percent of Month 1 variance (rent vs. ownership) that actually gets invested. i.e. how much of the down payment and closing costs would you keep invested if you were to not buy the house and rent instead.">
+      Invest variance month 1 (%)
+    </span>
+    <input id="varianceInvestPctM1" type="number" min="0" max="100" step="5" value="80" style="width:5rem">
   </label>
 
   <!-- (3) Net benefit selling cost mode -->
@@ -597,11 +615,18 @@ function compareCosts() {
   const defaultPayment = calcMonthlyPayment(loanAmount, monthlyInterest, nMonths);
   const monthlyMortgage = customMonthlyPayment > 0 ? customMonthlyPayment : defaultPayment;
 
+  // Variance invest fractions (0–1)
+  const varianceInvestPct = Math.min(100, Math.max(0, getNumericValue("varianceInvestPct") || 100));
+  const investFrac = varianceInvestPct / 100;
+  // Month-1 specific percentage
+  const varianceInvestPctM1 = Math.min(100, Math.max(0, getNumericValue("varianceInvestPctM1") || 100));
+  const investFracM1 = varianceInvestPctM1 / 100;
+
   // Basic input validations
   if (homePrice <= 0) { alert('Home price must be greater than 0.'); return; }
   if (downPayment < 0 || downPayment > homePrice) { alert('Down payment must be between 0 and the home price.'); return; }
   if (interestRate < 0) { alert('Interest rate cannot be negative.'); return; }
-  if (customMonthlyPayment > 0 && (customMonthlyPayment < (loanAmount * monthlyInterest))) {
+  if (loanAmount > 0 && customMonthlyPayment > 0 && (customMonthlyPayment < (loanAmount * monthlyInterest))) {
     alert('Custom payment is less than month-one interest. Increase the payment or clear the custom payment to use the calculated amount.');
     return;
   }
@@ -636,10 +661,14 @@ function compareCosts() {
   let rent = getNumericValue("monthlyRent");
   const rentInflation = getNumericValue("rentInflation") / 100;
 
-  // (4) Read extra principal: manual + recurring
+  // Read extra principal: manual + recurring
   const manual = readExtraPaymentsManual();
   const recurring = readExtraPaymentsRecurring(monthsOwned);
   const extraByMonth = combineExtraMaps([...manual, ...recurring]); // {monthIndex: amount}
+
+  // For payoff-time estimation beyond the modeled horizon, capture recurring inputs directly
+  const recurAmtInput = parseFloat(document.getElementById('recurringExtraAmount').value || '0');
+  const recurMonthInput = parseInt(document.getElementById('recurringExtraMonth').value || '0', 10);
 
   let balance = loanAmount;
   let homeValue = homePrice;
@@ -651,17 +680,19 @@ function compareCosts() {
   let maintenanceMonthly = maintenanceAnnual / 12;
 
   const buyClosingCostAmount = homePrice * closingBuy;
-  const cashAtClose = downPayment + buyClosingCostAmount; // show separately in summary
+  const cashAtClose = downPayment + buyClosingCostAmount;
 
   let ownershipInvested = 0;
   let rentInvested = 0;
 
-  // Series (use numeric X = month index for safer ticks)
-  const labels = []; // 1..monthsOwned (numeric)
+  const labels = [];
   const netBenefitSeries = [];
   const equitySeries = [];
 
   const netBenefitMode = document.getElementById('netBenefitMode').value; // 'sale_only' | 'every_month'
+
+  // Track payoff month
+  let payoffAtMonth = (loanAmount <= 0) ? 0 : null;
 
   for (let month = 1; month <= monthsOwned; month++) {
     let interest = balance * monthlyInterest;
@@ -676,10 +707,9 @@ function compareCosts() {
     }
 
     const closingCostThisMonth = month === 1 ? buyClosingCostAmount : 0;
-// include down payment in the "Down Payment & Additional Principal" column on month 1 (do not subtract from balance again)
-if (month === 1 && downPayment > 0) { extraPrincipal += downPayment; }
+    if (month === 1 && downPayment > 0) { extraPrincipal += downPayment; }
 
-const ownerCost = principal + extraPrincipal + interest + taxMonthly + insuranceMonthly + hoaMonthly + maintenanceMonthly + closingCostThisMonth;
+    const ownerCost = principal + extraPrincipal + interest + taxMonthly + insuranceMonthly + hoaMonthly + maintenanceMonthly + closingCostThisMonth;
     const variance = rent - ownerCost; // positive => renting costs more
 
     principalOnlyTotal += principal;
@@ -696,23 +726,26 @@ const ownerCost = principal + extraPrincipal + interest + taxMonthly + insurance
       ownershipInvested *= (1 + returnRate / 12);
       rentInvested      *= (1 + returnRate / 12);
     }
-    if (variance >= 0) ownershipInvested += variance; else rentInvested += -variance;
+
+    // Invest fraction: month 1 uses its own %, others use general %
+    const investFracThisMonth = (month === 1) ? investFracM1 : investFrac;
+    const investAmount = Math.abs(variance) * investFracThisMonth;
+    if (variance >= 0) ownershipInvested += investAmount; else rentInvested += investAmount;
 
     homeValue *= (1 + appreciationRate / 12);
     const equity = homeValue - balance;
 
-    // (3) Net benefit selling cost deduction per mode
     let sellClosingCostThisMonth = 0;
-let saleRealized = 0;
-if (netBenefitMode === 'every_month') {
-  sellClosingCostThisMonth = homeValue * closingSell;
-  saleRealized = equity - sellClosingCostThisMonth;
-} else if (month === monthsOwned) {
-  sellClosingCostThisMonth = homeValue * closingSell;
-  saleRealized = equity - sellClosingCostThisMonth;
-}
-const sellingCostApplied = sellClosingCostThisMonth;
-const netBenefit = equity - rentInvested + ownershipInvested - sellingCostApplied;
+    let saleRealized = 0;
+    if (netBenefitMode === 'every_month') {
+      sellClosingCostThisMonth = homeValue * closingSell;
+      saleRealized = equity - sellClosingCostThisMonth;
+    } else if (month === monthsOwned) {
+      sellClosingCostThisMonth = homeValue * closingSell;
+      saleRealized = equity - sellClosingCostThisMonth;
+    }
+    const sellingCostApplied = sellClosingCostThisMonth;
+    const netBenefit = equity - rentInvested + ownershipInvested - sellingCostApplied;
 
     labels.push(month);
     netBenefitSeries.push(netBenefit);
@@ -742,7 +775,9 @@ const netBenefit = equity - rentInvested + ownershipInvested - sellingCostApplie
       rent *= (1 + rentInflation);
     }
 
-    if (balance <= 0.005) { balance = 0;
+    if (balance <= 0.005) {
+      balance = 0;
+      payoffAtMonth = month; // record payoff moment
       if (month < monthsOwned) {
         for (let m = month + 1; m <= monthsOwned; m++) {
           homeValue *= (1 + appreciationRate / 12);
@@ -750,19 +785,23 @@ const netBenefit = equity - rentInvested + ownershipInvested - sellingCostApplie
           const variance2 = rent - ownerCost2;
           ownershipInvested *= (1 + returnRate / 12);
           rentInvested      *= (1 + returnRate / 12);
-          if (variance2 >= 0) ownershipInvested += variance2; else rentInvested += -variance2;
+
+          // After payoff, use the general % (other months)
+          const investAmount2 = Math.abs(variance2) * investFrac;
+          if (variance2 >= 0) ownershipInvested += investAmount2; else rentInvested += investAmount2;
+
           const equity2 = homeValue;
 
           let sellClosingCostThisMonth2 = 0;
-let saleRealized2 = 0;
-if (netBenefitMode === 'every_month') {
-  sellClosingCostThisMonth2 = homeValue * closingSell;
-  saleRealized2 = equity2 - sellClosingCostThisMonth2;
-} else if (m === monthsOwned) {
-  sellClosingCostThisMonth2 = homeValue * closingSell;
-  saleRealized2 = equity2 - sellClosingCostThisMonth2;
-}
-const netBenefit2 = equity2 - rentInvested + ownershipInvested - sellClosingCostThisMonth2;
+          let saleRealized2 = 0;
+          if (netBenefitMode === 'every_month') {
+            sellClosingCostThisMonth2 = homeValue * closingSell;
+            saleRealized2 = equity2 - sellClosingCostThisMonth2;
+          } else if (m === monthsOwned) {
+            sellClosingCostThisMonth2 = homeValue * closingSell;
+            saleRealized2 = equity2 - sellClosingCostThisMonth2;
+          }
+          const netBenefit2 = equity2 - rentInvested + ownershipInvested - sellClosingCostThisMonth2;
 
           monthlyDetails.push({
             monthIndex: m, periodLabel: formatTimeLabel(m),
@@ -790,12 +829,55 @@ const netBenefit2 = equity2 - rentInvested + ownershipInvested - sellClosingCost
     }
   }
 
+  // If not paid off within modeled months, continue amortization (P&I + recurring extra) to find payoff month
+  if (payoffAtMonth === null && loanAmount > 0) {
+    let bal2 = balance;
+    let m = monthsOwned;
+    const recAmt = (recurAmtInput > 0 ? recurAmtInput : 0);
+    const recMonth = (recurMonthInput >= 1 && recurMonthInput <= 12) ? recurMonthInput : 0;
+
+    // safety cap to avoid infinite loops (100 years)
+    while (bal2 > 0 && m < 1200) {
+      m += 1;
+      const interest2 = bal2 * monthlyInterest;
+      let principal2 = Math.min(monthlyMortgage - interest2, bal2);
+      if (principal2 < 0) principal2 = 0;
+      bal2 -= principal2;
+
+      if (recAmt > 0 && recMonth > 0) {
+        const monthInYear = ((m - 1) % 12) + 1;
+        if (monthInYear === recMonth) {
+          const extra2 = Math.min(recAmt, bal2);
+          bal2 -= extra2;
+        }
+      }
+    }
+    if (bal2 <= 0) payoffAtMonth = m;
+  }
+
   const totalPrincipalPaid = principalOnlyTotal + extraPrincipalTotal;
   const finalSnap = monthlyDetails[monthlyDetails.length - 1];
   const finalEquity = finalSnap.equity;
   const finalNetBenefit = finalSnap.netBenefit;
 
+  // Payoff display string
+  let payoffDisplay = '';
+  if (loanAmount <= 0) {
+    payoffDisplay = '0 years (no loan)';
+  } else if (typeof payoffAtMonth === 'number' && payoffAtMonth >= 1) {
+    payoffDisplay = formatTimeLabel(payoffAtMonth);
+  } else {
+    payoffDisplay = '—';
+  }
+
   document.getElementById("results").innerHTML = `
+    <div class="summary">
+      <h3>🏁 Loan Payoff Time</h3>
+      <div class="summary-grid">
+        <div class="summary-item"><strong>Time to Pay Off</strong> ${payoffDisplay}</div>
+      </div>
+    </div>
+
     <div class="summary">
       <h3>📊 Summary After ${yearsOwned} Years</h3>
       <div class="summary-grid">
@@ -842,33 +924,31 @@ const netBenefit2 = equity2 - rentInvested + ownershipInvested - sellClosingCost
   btn.disabled = false;
   btn.onclick = () => downloadCSV(latestHeaders, latestRows, `rent-vs-mortgage-${tableMode}-${Date.now()}.csv`);
 
-  // (2) Chart axes and tooltips show Year + Month
   const ctx1 = document.getElementById('chartOutlay').getContext('2d');
   const ctx2 = document.getElementById('chartEquity').getContext('2d');
   if (chart1) chart1.destroy();
   if (chart2) chart2.destroy();
 
   const totalMonths = monthlyDetails.length;
-const xScale = {
-  type: 'linear',
-  min: 1,
-  max: totalMonths,
-  ticks: {
-    stepSize: 12,        // force one tick every 12 months
-    autoSkip: false,     // don’t let Chart.js hide ticks
-    precision: 0,        // keep integer tick values
-    callback: (val) => {
-      // ticks will be 12, 24, 36, ...
-      if (!Number.isInteger(val)) return '';
-      if (val >= 12 && val % 12 === 0) {
-        const year = val / 12;
-        return `${year} year${year > 1 ? 's' : ''}`;
+  const xScale = {
+    type: 'linear',
+    min: 1,
+    max: totalMonths,
+    ticks: {
+      stepSize: 12,
+      autoSkip: false,
+      precision: 0,
+      callback: (val) => {
+        if (!Number.isInteger(val)) return '';
+        if (val >= 12 && val % 12 === 0) {
+          const year = val / 12;
+          return `${year} year${year > 1 ? 's' : ''}`;
+        }
+        return '';
       }
-      return '';
-    }
-  },
-  grid: { display: true }
-};
+    },
+    grid: { display: true }
+  };
 
   chart1 = new Chart(ctx1, {
     type: 'line',
@@ -902,7 +982,7 @@ const xScale = {
       datasets: [
         { label: 'Equity + Ownership Surplus Invested', data: monthlyDetails.map((d,i)=>({x:i+1,y:d.equity + d.ownershipInvested})), borderWidth: 2, tension: 0.15, pointRadius: 0 },
         { label: 'Renter Surplus Invested', data: monthlyDetails.map((d,i)=>({x:i+1,y:d.rentInvested})), borderWidth: 2, tension: 0.15, pointRadius: 0 },
-	{ label: 'Net Benefit of Ownership', data: monthlyDetails.map((d,i)=>({x:i+1,y:d.netBenefit})), borderWidth: 2, tension: 0.15, pointRadius: 0 }
+        { label: 'Net Benefit of Ownership', data: monthlyDetails.map((d,i)=>({x:i+1,y:d.netBenefit})), borderWidth: 2, tension: 0.15, pointRadius: 0 }
       ]
     },
     options: {
@@ -1161,15 +1241,15 @@ function toCsvValue(v) {
   return s;
 }
 
-// NEW: robust CSV downloader (works with Excel, Numbers, Google Sheets)
+// Robust CSV downloader
 function downloadCSV(headers, rows, filename = 'table.csv') {
   if (!Array.isArray(rows) || rows.length === 0) {
     alert('No table data to download yet — run the calculation first.');
     return;
   }
 
-  const EOL = '\r\n';   // Excel-friendly newlines
-  const BOM = '\uFEFF'; // Helps Excel detect UTF-8
+  const EOL = '\r\n';
+  const BOM = '\uFEFF';
 
   const csv = [
     headers.map(toCsvValue).join(','),
@@ -1194,7 +1274,12 @@ window.addEventListener('DOMContentLoaded', () => {
   const cents = document.getElementById('toggleCents');
   cents?.addEventListener('change', () => { compareCosts(); });
   document.getElementById('netBenefitMode')?.addEventListener('change', () => { compareCosts(); });
+
+  // Recalculate when the invest percentages change
+  document.getElementById('varianceInvestPct')?.addEventListener('input', () => { compareCosts(); });
+  document.getElementById('varianceInvestPctM1')?.addEventListener('input', () => { compareCosts(); });
 });
 </script>
 </body>
 </html>
+
