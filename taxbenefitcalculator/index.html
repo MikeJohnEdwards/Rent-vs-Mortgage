@@ -9,28 +9,64 @@
     * { box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
-      margin: 0; padding: 2rem; background: #f5f5f7; min-height: 100vh; color: #1d1d1f; line-height: 1.47059;
-      -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+      margin: 0;
+      padding: 2rem;
+      background: #f5f5f7;
+      min-height: 100vh;
+      color: #1d1d1f;
+      line-height: 1.47059;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
     .container {
-      max-width: 1200px; margin: 0 auto; background: rgba(255, 255, 255, 0.8);
-      backdrop-filter: saturate(180%) blur(20px); border-radius: 18px; padding: 2rem;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12); border: 1px solid rgba(255, 255, 255, 0.18);
+      max-width: 1200px;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: saturate(180%) blur(20px);
+      border-radius: 18px;
+      padding: 2rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.18);
     }
-    h1 { text-align: center; font-size: 2.25rem; font-weight: 600; margin-bottom: 1rem; letter-spacing: -0.015em; }
+    h1 {
+      text-align: center;
+      font-size: clamp(1.5rem, 2.2vw + 1rem, 2.25rem);
+      font-weight: 600;
+      margin-bottom: 1rem;
+      letter-spacing: -0.015em;
+    }
     h2 { font-size: 1.5rem; font-weight: 600; margin: 2rem 0 1rem; letter-spacing: -0.01em; }
     h3 { font-size: 1.25rem; font-weight: 600; margin: 1.5rem 0 1rem; letter-spacing: -0.01em; }
 
-    .input-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
-    .input-group {
-      background: rgba(255,255,255,0.7); padding: 1.1rem; border-radius: 12px; border: 1px solid rgba(0,0,0,0.1);
-      transition: all .2s cubic-bezier(.4,0,.25,1); backdrop-filter: blur(10px);
+    .input-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
     }
-    .input-group:hover { background: rgba(255,255,255,.9); box-shadow: 0 4px 20px rgba(0,0,0,.08); transform: translateY(-1px); border-color: rgba(0,0,0,.15); }
+    .input-group {
+      background: rgba(255,255,255,0.7);
+      padding: 1.1rem;
+      border-radius: 12px;
+      border: 1px solid rgba(0,0,0,0.1);
+      transition: all .2s cubic-bezier(.4,0,.25,1);
+      backdrop-filter: blur(10px);
+    }
+    .input-group:hover {
+      background: rgba(255,255,255,.9);
+      box-shadow: 0 4px 20px rgba(0,0,0,.08);
+      transform: translateY(-1px);
+      border-color: rgba(0,0,0,.15);
+    }
     label { display: block; margin-bottom: .5rem; font-weight: 500; font-size: .9rem; letter-spacing: -0.01em; }
     input[type="number"], input[type="text"], select {
-      width: 100%; padding: 12px 14px; border: 1px solid rgba(0,0,0,.15); border-radius: 8px; font-size: 1rem;
-      transition: all .2s cubic-bezier(.4,0,.25,1); background: rgba(255,255,255,.9);
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid rgba(0,0,0,.15);
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: all .2s cubic-bezier(.4,0,.25,1);
+      background: rgba(255,255,255,.9);
     }
     input[type="number"]:focus, select:focus, input[type="text"]:focus {
       outline: none; border-color: #007aff; box-shadow: 0 0 0 4px rgba(0,122,255,.12); background: #fff;
@@ -39,10 +75,25 @@
     .input-with-select input, .input-with-select select { flex: 1; }
 
     button {
-      display: inline-block; padding: 12px 18px; background: #007aff; color: #fff; border: none; border-radius: 12px;
-      font-size: 1rem; font-weight: 600; cursor: pointer; transition: all .2s cubic-bezier(.4,0,.25,1); box-shadow: 0 2px 8px rgba(0,122,255,.25);
+      display: inline-block;
+      padding: 12px 18px;
+      background: #007aff;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s cubic-bezier(.4,0,.25,1);
+      box-shadow: 0 2px 8px rgba(0,122,255,.25);
     }
-    .primary-actions { display: flex; justify-content: center; gap: .75rem; margin: 1rem 0; flex-wrap: wrap; }
+    .primary-actions {
+      display: flex;
+      justify-content: center;
+      gap: .75rem;
+      margin: 1rem 0;
+      flex-wrap: wrap;
+    }
     button:hover { background: #0051d5; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,122,255,.35); }
     button:active { transform: translateY(0); background: #004fc7; }
 
@@ -52,7 +103,10 @@
 
     .results { margin-top: 1rem; }
     .summary {
-      background: linear-gradient(135deg,#f8f9fa 0%,#e9ecef 100%); padding: 1.25rem; border-radius: 15px; margin-bottom: 1rem;
+      background: linear-gradient(135deg,#f8f9fa 0%,#e9ecef 100%);
+      padding: 1.25rem;
+      border-radius: 15px;
+      margin-bottom: 1rem;
       box-shadow: 0 4px 12px rgba(0,0,0,.1);
     }
     .summary-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(260px,1fr)); gap: 12px; }
@@ -66,80 +120,103 @@
     details.breakdown .row:last-child{ border-bottom:none; }
     details.breakdown .ctx { grid-column: 1 / -1; background: #f8f8fb; border: 1px solid rgba(0,0,0,.06); border-radius: 10px; padding: .6rem .75rem; color:#4b4b50; font-size:.9rem; }
 
- /* Lightweight, design-matched tooltips */
-.has-tip {
-  position: relative;
-  cursor: help;
-  text-decoration: underline dotted rgba(0,0,0,.25);
-  text-underline-offset: 2px;
-  border-radius: 4px; /* focus ring */
-  display: inline-block; /* ensures correct positioning box */
-}
-.has-tip:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 4px rgba(0,122,255,.12);
-}
+    /* Lightweight, design-matched tooltips */
+    .has-tip {
+      position: relative;
+      cursor: help;
+      text-decoration: underline dotted rgba(0,0,0,.25);
+      text-underline-offset: 2px;
+      border-radius: 4px; /* focus ring */
+      display: inline-block; /* ensures correct positioning box */
+    }
+    .has-tip:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 4px rgba(0,122,255,.12);
+    }
 
-/* Balloon */
-.has-tip::before {
-  content: attr(data-tip);
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% + 12px);
-  transform: translate(-50%, 6px);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity .15s ease, transform .15s ease;
-  background: rgba(255,255,255,.98);
-  color: #1d1d1f;
-  border: 1px solid rgba(0,0,0,.12);
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0,0,0,.12);
-  padding: 10px 12px;
-  font-size: .875rem;
-  line-height: 1.35;
-  max-width: 320px;
-  min-width: 220px;
-  white-space: pre-line;
-  z-index: 20;
-}
+    /* Balloon */
+    .has-tip::before {
+      content: attr(data-tip);
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 12px);
+      transform: translate(-50%, 6px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .15s ease, transform .15s ease;
+      background: rgba(255,255,255,.98);
+      color: #1d1d1f;
+      border: 1px solid rgba(0,0,0,.12);
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.12);
+      padding: 10px 12px;
+      font-size: .875rem;
+      line-height: 1.35;
+      max-width: 320px;
+      min-width: 220px;
+      white-space: pre-line;
+      z-index: 20;
+    }
 
-/* Arrow */
-.has-tip::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% + 6px);
-  transform: translate(-50%, 6px) rotate(45deg);
-  width: 10px; height: 10px;
-  background: rgba(255,255,255,.98);
-  border-left: 1px solid rgba(0,0,0,.12);
-  border-top: 1px solid rgba(0,0,0,.12);
-  opacity: 0;
-  transition: opacity .15s ease, transform .15s ease;
-  z-index: 19;
-}
+    /* Arrow */
+    .has-tip::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 6px);
+      transform: translate(-50%, 6px) rotate(45deg);
+      width: 10px; height: 10px;
+      background: rgba(255,255,255,.98);
+      border-left: 1px solid rgba(0,0,0,.12);
+      border-top: 1px solid rgba(0,0,0,.12);
+      opacity: 0;
+      transition: opacity .15s ease, transform .15s ease;
+      z-index: 19;
+    }
 
-/* Show on hover/focus (and for touch via data-open) */
-.has-tip:hover::before,
-.has-tip:hover::after,
-.has-tip:focus-visible::before,
-.has-tip:focus-visible::after,
-.has-tip[data-open="true"]::before,
-.has-tip[data-open="true"]::after {
-  opacity: 1;
-  transform: translate(-50%, 0);
-}
+    /* Show on hover/focus (and for touch via data-open) */
+    .has-tip:hover::before,
+    .has-tip:hover::after,
+    .has-tip:focus-visible::before,
+    .has-tip:focus-visible::after,
+    .has-tip[data-open="true"]::before,
+    .has-tip[data-open="true"]::after {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
 
+    /* --------- Mobile & small screens ---------- */
+    @media (max-width: 720px) {
+      body { padding: 1rem; }
+      .container {
+        padding: 1rem;
+        border-radius: 14px;
+        box-shadow: 0 4px 18px rgba(0,0,0,.10);
+      }
+      h2 { font-size: 1.25rem; margin: 1.25rem 0 .75rem; }
+      h3 { font-size: 1.1rem; }
+      .input-grid { grid-template-columns: 1fr; gap: .75rem; }
+      .summary-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+      .toolbar { justify-content: stretch; }
+      .chip { width: 100%; justify-content: space-between; }
+      .primary-actions { gap: .5rem; }
+      .primary-actions button { width: 100%; padding: 14px 18px; }
+      .input-with-select { flex-direction: column; }
+      details.breakdown .row { grid-template-columns: 1fr auto; }
+      .has-tip::before { left: 0; transform: translate(0,6px); }
+      .has-tip::after { left: 12px; transform: translate(0,6px) rotate(45deg); }
+    }
 
-
-
-
-</style>
+    /* Reduce hover effects on touch devices to avoid jumpiness */
+    @media (hover: none) and (pointer: coarse) {
+      .input-group:hover { transform: none; box-shadow: none; }
+      button:hover { transform: none; }
+    }
+  </style>
 </head>
 <body>
   <div class="container">
-    <h1>🏠 Homebuyer Tax‑Benefit Calculator</h1>
+    <h1>🏠 Homebuyer Tax-Benefit Calculator</h1>
 
     <!-- Toolbar: Year/Regime and Cents -->
     <div class="toolbar" role="group" aria-label="Calculator settings">
@@ -176,7 +253,7 @@
       </div>
     </div>
 
-    <h2>Home‑Related Deductions</h2>
+    <h2>Home-Related Deductions</h2>
     <div class="input-grid">
       <div class="input-group" style="grid-column:1/-1">
         <label class="chip"><input type="checkbox" id="useEstimator"> Calculate estimated interest based on loan and mortgage rate</label>
@@ -213,7 +290,7 @@
       </div>
 
       <div class="input-group">
-        <label for="otherItemized">Other Itemized (non‑home $)</label>
+        <label for="otherItemized">Other Itemized (non-home $)</label>
         <input type="number" id="otherItemized" min="0" value="3000" />
       </div>
     </div>
@@ -246,7 +323,12 @@
 
     // Currency formatting respecting the Show Cents toggle
     let showCents = false;
-    const fmt = (n) => new Intl.NumberFormat('en-US', { style:'currency', currency:'USD', minimumFractionDigits: showCents?2:0, maximumFractionDigits: showCents?2:0 }).format(n || 0);
+    const fmt = (n) => new Intl.NumberFormat('en-US', {
+      style:'currency',
+      currency:'USD',
+      minimumFractionDigits: showCents?2:0,
+      maximumFractionDigits: showCents?2:0
+    }).format(n || 0);
 
     // Simple interest estimator: Loan × Rate (annual)
     function estimateInterest(loan, ratePct) {
@@ -327,7 +409,7 @@
         <div class="summary">
           <div class="summary-grid">
             <div class="summary-item"><h4>Baseline Deduction</h4><div class="value">${fmt(r.baselineDeduction)} <span class="muted">(${whichDedBaseline})</span></div></div>
-            <div class="summary-item"><h4>With‑Home Deduction</h4><div class="value">${fmt(r.withHomeDeduction)} <span class="muted">(${whichDedWithHome})</span></div></div>
+            <div class="summary-item"><h4>With-Home Deduction</h4><div class="value">${fmt(r.withHomeDeduction)} <span class="muted">(${whichDedWithHome})</span></div></div>
             <div class="summary-item"><h4>Incremental Deduction from Home</h4><div class="value">${fmt(r.incrementalDeduction)}</div></div>
             <div class="summary-item"><h4>Estimated Federal Savings</h4><div class="value">${fmt(r.fedSavings)}</div></div>
             <div class="summary-item"><h4>Estimated State Savings</h4><div class="value">${fmt(r.stateSavings)}</div></div>
@@ -365,21 +447,21 @@
 
           <div class="row">
             <div>Itemized (without home)</div><div>${fmt(r.itemizedWithoutHome)}</div>
-            <div class="ctx">= min(SALT cap, State/Local income tax) + Other Itemized (non‑home). Property tax and mortgage interest are excluded here.</div>
+            <div class="ctx">= min(SALT cap, State/Local income tax) + Other Itemized (non-home). Property tax and mortgage interest are excluded here.</div>
           </div>
 
           <div class="row">
             <div>Itemized (with home)</div><div>${fmt(r.itemizedWithHome)}</div>
-            <div class="ctx">= State/Local income tax counted (within SALT) + Property tax allowed (within SALT) + Mortgage interest + Other Itemized (non‑home).</div>
+            <div class="ctx">= State/Local income tax counted (within SALT) + Property tax allowed (within SALT) + Mortgage interest + Other Itemized (non-home).</div>
           </div>
 
           <div class="row">
-            <div>Baseline vs With‑Home Deduction</div><div>${fmt(r.baselineDeduction)} vs ${fmt(r.withHomeDeduction)}</div>
-            <div class="ctx">Each equals max(Standard Deduction, Itemized). The incremental deduction from home is their difference when the with‑home amount is larger.</div>
+            <div>Baseline vs With-Home Deduction</div><div>${fmt(r.baselineDeduction)} vs ${fmt(r.withHomeDeduction)}</div>
+            <div class="ctx">Each equals max(Standard Deduction, Itemized). The incremental deduction from home is their difference when the with-home amount is larger.</div>
           </div>
 
           <div class="row">
-            <div>Estimated savings (marginal‑rate method)</div><div>${fmt(r.totalSavings)}</div>
+            <div>Estimated savings (marginal-rate method)</div><div>${fmt(r.totalSavings)}</div>
             <div class="ctx">Federal: Incremental Deduction × Federal marginal rate. State (optional): Incremental Deduction × State/Local marginal rate. Totals are the sum.</div>
           </div>
         </details>
@@ -393,6 +475,20 @@
 
     document.getElementById('calcBtn').addEventListener('click', () => {
       const r = calculate(); render(r);
+    });
+
+    // Make tooltips tap-friendly on touch devices
+    document.addEventListener('click', (e) => {
+      const tip = e.target.closest('.has-tip');
+      // Close any open tips if tapping outside
+      if (!tip) {
+        document.querySelectorAll('.has-tip[data-open="true"]').forEach(el => el.removeAttribute('data-open'));
+        return;
+      }
+      // Toggle the tapped tip
+      const isOpen = tip.getAttribute('data-open') === 'true';
+      document.querySelectorAll('.has-tip[data-open="true"]').forEach(el => el.removeAttribute('data-open'));
+      if (!isOpen) tip.setAttribute('data-open', 'true');
     });
 
     // First paint
