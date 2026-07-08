@@ -204,6 +204,29 @@
 
   <h2>🏠 Home Purchase</h2>
   <div class="input-grid">
+    <div class="input-group">
+      <label for="purchaseMonth"><span class="has-tip"
+          tabindex="0"
+          data-tip="The month and year you plan to (or did) purchase the home. This is used to label each period in the results table with actual calendar months/years instead of relative time.">
+      Purchase Month &amp; Year</label>
+      <div class="input-with-select">
+        <select id="purchaseMonth">
+          <option value="1">January</option>
+          <option value="2">February</option>
+          <option value="3">March</option>
+          <option value="4">April</option>
+          <option value="5">May</option>
+          <option value="6">June</option>
+          <option value="7" selected>July</option>
+          <option value="8">August</option>
+          <option value="9">September</option>
+          <option value="10">October</option>
+          <option value="11">November</option>
+          <option value="12">December</option>
+        </select>
+        <input type="number" id="purchaseYear" value="2026" min="1900" max="2200" step="1">
+      </div>
+    </div>
     <div class="input-group"><label for="homePrice">Home Price ($)</label><input type="number" id="homePrice" value="400000" min="0"></div>
     <div class="input-group">
       <label for="downPaymentValue">Down Payment</label>
@@ -388,20 +411,6 @@ Monthly Rent ($)</label><input type="number" id="monthlyRent" value="3000" min="
   </div>
 </div>
 
-<h2>💬 Share Your Feedback</h2>
-<div class="single-input">
-  <div class="input-group">
-    <p class="muted">
-      This calculator is designed to help make the rent vs. mortgage decision clearer, and I’d love to make it as useful as possible. If you noticed anything confusing, have ideas for improvements, or just want to share what worked well, I’d really appreciate hearing from you.
-
- Please <a href="mailto:rentvsbuying@gmail.com?subject=Feedback%20on%20Rent%20vs%20Mortgage%20Calculator">email me</a> at <strong>rentvsbuying@gmail.com</strong>
-
-    </p>
-  </div>
-</div>
-
-
-
 
 
  <div class="toolbar">
@@ -449,6 +458,10 @@ Monthly Rent ($)</label><input type="number" id="monthlyRent" value="3000" min="
     <button onclick="compareCosts()">Calculate Comparison</button>
     <button id="downloadCsvBtn" disabled>Download CSV</button>
   </div>
+  <div class="muted" style="text-align:center; margin-bottom:.5rem;">
+    Your inputs are automatically saved in this browser so they're here next time you visit.
+    <span class="link" id="clearSavedInputsBtn">Clear saved inputs</span>
+  </div>
 
   <div id="results" class="results-container"></div>
 </div>
@@ -478,19 +491,113 @@ function formatTimeLabel(month) {
   if (months === 0) return `${years} Year${years === 1 ? '' : 's'}`;
   return `${years} Year${years === 1 ? '' : 's'} ${months} Month${months === 1 ? '' : 's'}`;
 }
+const CALENDAR_MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+function calendarLabel(monthIndex) {
+  const startMonth = parseInt(document.getElementById('purchaseMonth')?.value || '1', 10);
+  const startYear = parseInt(document.getElementById('purchaseYear')?.value || String(new Date().getFullYear()), 10);
+  const absIndex = (startYear * 12 + (startMonth - 1)) + (monthIndex - 1);
+  const year = Math.floor(absIndex / 12);
+  const monthInYear = ((absIndex % 12) + 12) % 12; // 0-based, guard against negatives
+  return `${CALENDAR_MONTH_NAMES[monthInYear]} ${year}`;
+}
 function getNumericValue(id) {
   const input = document.getElementById(id);
   const value = (input.value || '').toString().replace(/,/g, '');
   return parseFloat(value) || 0;
 }
 
+// PERSISTENCE (localStorage) ----------------------
+const STORAGE_KEY = 'rentVsBuyCalculator_v1';
+const PERSIST_FIELD_IDS = [
+  'purchaseMonth','purchaseYear','homePrice','downPaymentType','downPaymentValue',
+  'interestRate','loanTerm','customMonthlyPayment','closingCostsBuy','closingCostsSell',
+  'appreciationRate','savingsReturnRate','propertyTaxValue','propertyTaxType','propertyTaxInflation',
+  'homeInsuranceValue','homeInsuranceType','insuranceInflation','hoaFees','hoaInflation',
+  'maintenanceValue','maintenanceType','maintenanceInflation','recurringExtraAmount','recurringExtraMonth',
+  'monthlyRent','rentInflation','yearsOwned','toggleCents','varianceInvestPct','varianceInvestPctM1',
+  'netBenefitMode'
+];
+let saveTimer = null;
+function scheduleSaveInputs() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveInputsToStorage, 400);
+}
+function saveInputsToStorage() {
+  try {
+    const fields = {};
+    for (const id of PERSIST_FIELD_IDS) {
+      const el = document.getElementById(id);
+      if (!el) continue;
+      fields[id] = (el.type === 'checkbox') ? el.checked : el.value;
+    }
+    const extraRows = Array.from(document.querySelectorAll('#extraPrincipalContainer .row')).map(r => ({
+      year: r.querySelector('.yearSel')?.value || '',
+      month: r.querySelector('.monthSel')?.value || '',
+      amount: r.querySelector('.amtInput')?.value || ''
+    }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ fields, extraRows }));
+  } catch (e) {
+    // localStorage unavailable (private browsing, disabled, etc.) - fail silently
+  }
+}
+function loadInputsFromStorage() {
+  let data;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    data = JSON.parse(raw);
+  } catch (e) {
+    return false;
+  }
+  if (!data || !data.fields) return false;
+  for (const id of PERSIST_FIELD_IDS) {
+    const el = document.getElementById(id);
+    if (!el || !(id in data.fields)) continue;
+    if (el.type === 'checkbox') el.checked = !!data.fields[id];
+    else el.value = data.fields[id];
+  }
+  if (Array.isArray(data.extraRows)) {
+    for (const row of data.extraRows) {
+      if (row.year || row.month || row.amount) {
+        addExtraRow({ year: row.year, month: row.month, amount: row.amount });
+      }
+    }
+  }
+  return true;
+}
+function clearSavedInputs() {
+  try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+  location.reload();
+}
+
 // EXTRA PRINCIPAL UI ------------------------------
 let paymentRowId = 0;
-function monthName(m){return `Month ${m}`;}
+function monthName(m) {
+  const startMonth = parseInt(document.getElementById('purchaseMonth')?.value || '1', 10);
+  const idx = (((startMonth - 1) + (m - 1)) % 12 + 12) % 12;
+  return CALENDAR_MONTH_NAMES[idx];
+}
+function buildMonthOptions() {
+  const startMonth = parseInt(document.getElementById('purchaseMonth')?.value || '1', 10);
+  const items = Array.from({length: 12}, (_, i) => {
+    const offset = i + 1; // 1-based position within the ownership year (used in calculations)
+    const calMonth = (((startMonth - 1) + (offset - 1)) % 12 + 12) % 12; // 0-based calendar month (0=Jan)
+    return { offset, calMonth };
+  });
+  items.sort((a, b) => a.calMonth - b.calMonth); // display January -> December
+  return items.map(it => `<option value="${it.offset}">${CALENDAR_MONTH_NAMES[it.calMonth]}</option>`).join('');
+}
+function calendarYearForOwnershipYear(y) {
+  const firstMonthAbsIndex = (y - 1) * 12 + 1;
+  const label = calendarLabel(firstMonthAbsIndex);
+  return label.split(' ')[1];
+}
 function buildYearOptions() {
   const yearsOwned = Math.max(1, parseInt(document.getElementById('yearsOwned').value || '1', 10));
   const opts = [];
-  for (let y = 1; y <= yearsOwned; y++) { opts.push(`<option value="${y}">Year ${y}</option>`); }
+  for (let y = 1; y <= yearsOwned; y++) {
+    opts.push(`<option value="${y}">Year ${y} (${calendarYearForOwnershipYear(y)})</option>`);
+  }
   return opts.join('');
 }
 function ensureAtLeastOneExtraRow() {
@@ -507,7 +614,7 @@ function addExtraRow(prefill) {
     <select class="yearSel"><option value="">Year</option>${buildYearOptions()}</select>
     <select class="monthSel">
       <option value="">Month</option>
-      ${Array.from({length:12},(_,i)=>`<option value="${i+1}">${monthName(i+1)}</option>`).join('')}
+      ${buildMonthOptions()}
     </select>
     <input type="number" class="amtInput" placeholder="Amount $" min="0" step="100">
     <span class="danger" title="Remove" onclick="this.parentElement.remove(); ensureAtLeastOneExtraRow();">✕</span>
@@ -575,12 +682,27 @@ function combineExtraMaps(list) {
 }
 function refreshYearOptionsInRows() {
   const maxYear = Math.max(1, parseInt(document.getElementById('yearsOwned').value || '1', 10));
-  const opts = Array.from({length: maxYear}, (_,i)=>`<option value="${i+1}">Year ${i+1}</option>`).join('');
+  const yearOpts = Array.from({length: maxYear}, (_,i)=>`<option value="${i+1}">Year ${i+1} (${calendarYearForOwnershipYear(i+1)})</option>`).join('');
+  const monthOpts = buildMonthOptions();
   document.querySelectorAll('#extraPrincipalContainer .yearSel').forEach(sel=>{
     const cur = parseInt(sel.value || '0', 10);
-    sel.innerHTML = `<option value="">Year</option>${opts}`;
-    if (!cur || cur > maxYear) sel.value = '';
+    sel.innerHTML = `<option value="">Year</option>${yearOpts}`;
+    if (!cur || cur > maxYear) sel.value = ''; else sel.value = String(cur);
   });
+  document.querySelectorAll('#extraPrincipalContainer .monthSel').forEach(sel=>{
+    const cur = sel.value;
+    sel.innerHTML = `<option value="">Month</option>${monthOpts}`;
+    sel.value = cur;
+  });
+  refreshRecurringMonthOptions();
+}
+function refreshRecurringMonthOptions() {
+  const sel = document.getElementById('recurringExtraMonth');
+  if (!sel) return;
+  const cur = sel.value;
+  const monthOpts = buildMonthOptions();
+  sel.innerHTML = `<option value="">Month</option>${monthOpts}`;
+  sel.value = cur;
 }
 
 // CSV + chart + table state -----------------------
@@ -765,7 +887,7 @@ function compareCosts() {
 
     monthlyDetails.push({
       monthIndex: month,
-      periodLabel: formatTimeLabel(month),
+      periodLabel: calendarLabel(month),
       principal, extraPrincipal, interest,
       hoa: hoaMonthly, insurance: insuranceMonthly, maintenance: maintenanceMonthly, propertyTax: taxMonthly,
       closingCostBuy: closingCostThisMonth,
@@ -816,7 +938,7 @@ function compareCosts() {
           const netBenefit2 = equity2 - rentInvested + ownershipInvested - sellClosingCostThisMonth2;
 
           monthlyDetails.push({
-            monthIndex: m, periodLabel: formatTimeLabel(m),
+            monthIndex: m, periodLabel: calendarLabel(m),
             principal: 0, extraPrincipal: 0, interest: 0,
             hoa: hoaMonthly, insurance: insuranceMonthly, maintenance: maintenanceMonthly, propertyTax: taxMonthly,
             closingCostBuy: 0,
@@ -914,6 +1036,7 @@ function compareCosts() {
       </select>
     </div>
     <div id="tableMount"></div>
+
 
     <div class="charts">
       <div class="chart-card">
@@ -1137,6 +1260,9 @@ function renderTable() {
       const sum = (k) => slice.reduce((s,d)=>s + d[k], 0);
       yearRows.push({
         year: y,
+        label: (slice[0].periodLabel === endSnap.periodLabel)
+          ? `Year ${y} (${slice[0].periodLabel})`
+          : `Year ${y} (${slice[0].periodLabel} – ${endSnap.periodLabel})`,
         principal: sum('principal'),
         extraPrincipal: sum('extraPrincipal'),
         interest: sum('interest'),
@@ -1161,7 +1287,7 @@ function renderTable() {
 
     const rowsHtml = yearRows.map(r => `
       <tr>
-        <td><strong>Year ${r.year}</strong></td>
+        <td><strong>${r.label}</strong></td>
         <td>${formatCurrency(r.principal)}</td>
         <td>${formatCurrency(r.extraPrincipal)}</td>
         <td>${formatCurrency(r.interest)}</td>
@@ -1237,7 +1363,7 @@ function renderTable() {
 
     // CSV rows (yearly)
     latestRows = yearRows.map(r => [
-      `Year ${r.year}`, r.principal.toFixed(2), r.extraPrincipal.toFixed(2), r.interest.toFixed(2), r.hoa.toFixed(2), r.insurance.toFixed(2),
+      r.label, r.principal.toFixed(2), r.extraPrincipal.toFixed(2), r.interest.toFixed(2), r.hoa.toFixed(2), r.insurance.toFixed(2),
       r.maintenance.toFixed(2), r.propertyTax.toFixed(2), r.closingCostBuy.toFixed(2), r.ownershipCost.toFixed(2),
       r.rent.toFixed(2), r.variance.toFixed(2), r.ownershipInvested.toFixed(2), r.rentInvested.toFixed(2),
       r.homeValue.toFixed(2), r.loanOutstanding.toFixed(2), r.equity.toFixed(2), r.sellingCost.toFixed(2),
@@ -1281,7 +1407,9 @@ function downloadCSV(headers, rows, filename = 'table.csv') {
 
 // Bootstrapping of extra principal UI -------------
 window.addEventListener('DOMContentLoaded', () => {
+  const restored = loadInputsFromStorage();
   maybeAppendAnotherRow();
+  refreshRecurringMonthOptions();
   document.getElementById('yearsOwned').addEventListener('input', refreshYearOptionsInRows);
   const cents = document.getElementById('toggleCents');
   cents?.addEventListener('change', () => { compareCosts(); });
@@ -1290,8 +1418,30 @@ window.addEventListener('DOMContentLoaded', () => {
   // Recalculate when the invest percentages change
   document.getElementById('varianceInvestPct')?.addEventListener('input', () => { compareCosts(); });
   document.getElementById('varianceInvestPctM1')?.addEventListener('input', () => { compareCosts(); });
+  document.getElementById('purchaseMonth')?.addEventListener('change', () => {
+    refreshYearOptionsInRows();
+    if (monthlyDetails.length) compareCosts();
+  });
+  document.getElementById('purchaseYear')?.addEventListener('input', () => {
+    refreshYearOptionsInRows();
+    if (monthlyDetails.length) compareCosts();
+  });
+
+  // Autosave: any change anywhere in the form gets saved to localStorage
+  const container = document.querySelector('.container');
+  container?.addEventListener('input', scheduleSaveInputs);
+  container?.addEventListener('change', scheduleSaveInputs);
+
+  document.getElementById('clearSavedInputsBtn')?.addEventListener('click', () => {
+    if (confirm('Clear your saved inputs from this browser? This cannot be undone.')) {
+      clearSavedInputs();
+    }
+  });
+
+  // If we restored a previous session, recalculate immediately so results reflect it
+  if (restored) compareCosts();
 });
+
 </script>
 </body>
 </html>
-
